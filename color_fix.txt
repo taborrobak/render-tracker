@@ -1,0 +1,7 @@
+s/job-index.*color: var(--nord4);/job-index { width: 60px; font-weight: 500; font-size: 13px; text-align: center; color: var(--nord6); }/g
+s/trait-value.*color: var(--nord4);/trait-value { color: var(--nord5); font-size: 13px; text-align: right; }/g
+s/trait-label.*color: var(--nord4);/trait-label { color: var(--nord4); font-weight: 500; font-size: 13px; }/g
+s/traits-title.*color: var(--nord4);/traits-title { font-size: 16px; font-weight: 600; margin-bottom: 15px; color: var(--nord5); }/g
+s/filter-button.*color: var(--nord4);/filter-button { padding: 6px 12px; background: var(--nord2); border: 1px solid var(--nord3); border-radius: 6px; color: var(--nord5); cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 6px; width: fit-content; }/g
+s/page-btn.*color: var(--nord4);/page-btn { padding: 4px 8px; background: var(--nord2); border: 1px solid var(--nord3); border-radius: 4px; color: var(--nord5); cursor: pointer; font-size: 11px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }/g
+s/search-input.*color: var(--nord4);/search-input { width: 100%; padding: 8px 12px; background: var(--nord0); border: 1px solid var(--nord2); border-radius: 6px; color: var(--nord5); font-size: 13px; margin-bottom: 10px; }/g

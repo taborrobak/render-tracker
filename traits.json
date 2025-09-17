@@ -1,0 +1,34 @@
+{
+  "1": {
+    "scene": "Forest Path",
+    "resolution": "1920x1080",
+    "frame_rate": "30",
+    "style": "Photorealistic",
+    "lighting": "Golden Hour",
+    "camera_angle": "Wide Shot"
+  },
+  "2": {
+    "scene": "Urban Street",
+    "resolution": "1920x1080", 
+    "frame_rate": "24",
+    "style": "Cinematic",
+    "lighting": "Neon Night",
+    "camera_angle": "Low Angle"
+  },
+  "3": {
+    "scene": "Mountain Vista",
+    "resolution": "2560x1440",
+    "frame_rate": "60",
+    "style": "Fantasy",
+    "lighting": "Dramatic Sunset",
+    "camera_angle": "Aerial View"
+  },
+  "1001": {
+    "scene": "Ancient Temple",
+    "resolution": "1920x1080",
+    "frame_rate": "30",
+    "style": "Mystical",
+    "lighting": "Soft Ambient",
+    "camera_angle": "Eye Level"
+  }
+}

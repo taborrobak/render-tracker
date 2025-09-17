@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RenderFlow</title>
+    <!-- JetBrains Mono Nerd Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/css/style.css" />
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- Header -->
+      <div class="header">
+        <div class="header-left">
+          <div class="logo">RenderFlow</div>
+          <div class="header-filters-section">
+            <div class="header-status-filters" id="statusFilters">
+              <div
+                class="status-chip inactive"
+                data-status="inactive"
+                data-tooltip="Inactive"
+              >
+                ○
+              </div>
+              <div
+                class="status-chip working"
+                data-status="working"
+                data-tooltip="Working"
+              >
+                ⚙
+              </div>
+              <div
+                class="status-chip complete"
+                data-status="complete"
+                data-tooltip="Complete"
+              >
+                ✓
+              </div>
+              <div
+                class="status-chip done"
+                data-status="done"
+                data-tooltip="Done"
+              >
+                ◉
+              </div>
+              <div
+                class="status-chip error"
+                data-status="error"
+                data-tooltip="Error"
+              >
+                ✕
+              </div>
+              <div
+                class="status-chip flagged"
+                data-status="flagged"
+                data-tooltip="Flagged"
+              >
+                ⚠
+              </div>
+              <div
+                class="status-chip starred"
+                data-status="starred"
+                data-tooltip="Starred"
+              >
+                ⭐
+              </div>
+              <div
+                class="flagged-popup-icon"
+                onclick="renderFlow.toggleFlaggedPopup(event)"
+                title="Show flagged jobs"
+              >
+                ℹ
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="header-status-summary" id="statusSummary">
+            <span class="total-jobs" id="totalJobs" data-label="Total Jobs"
+              >0</span
+            >
+            <span class="status-separator">:</span>
+            <span
+              class="status-count inactive"
+              id="count-inactive"
+              data-label="Inactive"
+              >0</span
+            >
+            <span class="status-separator">│</span>
+            <span
+              class="status-count working"
+              id="count-working"
+              data-label="Working"
+              >0</span
+            >
+            <span
+              class="status-count complete"
+              id="count-complete"
+              data-label="Complete"
+              >0</span
+            >
+            <span class="status-count done" id="count-done" data-label="Done"
+              >0</span
+            >
+            <span class="status-separator">│</span>
+            <span class="status-count error" id="count-error" data-label="Error"
+              >0</span
+            >
+            <span
+              class="status-count flagged"
+              id="count-flagged"
+              data-label="Flagged"
+              >0</span
+            >
+          </div>
+          <div class="connection-status" id="connectionStatus">
+            ⧗ Connecting...
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <div class="job-list">
+          <div class="job-list-header">
+            <input
+              type="text"
+              class="header-jump-input"
+              placeholder="Jump to index..."
+              id="jumpToIndex"
+            />
+            <span class="header-label">Per page:</span>
+            <input
+              type="number"
+              class="header-per-page-input"
+              value="20"
+              min="10"
+              max="100"
+              id="perPageInput"
+            />
+            <div class="header-pagination">
+              <button class="header-page-btn" id="prevBtn">‹</button>
+              <span id="headerPageInfo">1 of 5000</span>
+              <button class="header-page-btn" id="nextBtn">›</button>
+            </div>
+          </div>
+          <div class="job-items" id="jobItems">
+            <div class="loading">Loading jobs...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <div class="job-detail" id="jobDetail">
+          <div class="empty-state">
+            <div class="empty-icon">▦</div>
+            <h3>Select a job to view details</h3>
+            <p>
+              Choose a job from the list to see its status, preview, and
+              attributes
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Flagged jobs popup overlay and modal -->
+    <div
+      class="flagged-popup-overlay"
+      id="flaggedPopupOverlay"
+      onclick="renderFlow.closeFlaggedPopup()"
+    ></div>
+    <div class="flagged-popup" id="flaggedPopup">
+      <div class="flagged-popup-header">
+        <h3 class="flagged-popup-title">Flagged Jobs</h3>
+        <button
+          class="flagged-popup-close"
+          onclick="renderFlow.closeFlaggedPopup()"
+          title="Close"
+        >
+          ×
+        </button>
+      </div>
+      <div class="flagged-popup-body">
+        <textarea
+          class="flagged-popup-textarea"
+          id="flaggedPopupTextarea"
+          readonly
+          placeholder="No flagged jobs"
+        ></textarea>
+      </div>
+      <div class="flagged-popup-footer">
+        <button
+          class="reset-all-flagged-btn"
+          id="resetAllFlaggedBtn"
+          onclick="renderFlow.resetAllFlaggedJobs()"
+          title="Reset all flagged jobs to pending status"
+        >
+          🔄 Reset All Flagged Jobs
+        </button>
+      </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+    <script>
+      // Initialize RenderFlow
+      const renderFlow = new RenderFlow();
+    </script>
+  </body>
+</html>

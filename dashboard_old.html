@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RenderFlow</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        background: #1a1a1a;
+        color: #e0e0e0;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .app-container {
+        display: flex;
+        height: 100vh;
+      }
+
+      /* Header */
+      .header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: #2a2a2a;
+        border-bottom: 1px solid #3a3a3a;
+        display: flex;
+        align-items: center;
+        padding: 0 20px;
+        z-index: 100;
+      }
+
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .logo {
+        color: #4fc3f7;
+        font-size: 16px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .logo::before {
+        content: "🎯";
+        font-size: 18px;
+      }
+
+      .header-right {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .connection-status {
+        padding: 6px 12px;
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      .connected {
+        background: rgba(76, 175, 80, 0.2);
+        color: #4caf50;
+        border: 1px solid #4caf50;
+      }
+
+      .disconnected {
+        background: rgba(244, 67, 54, 0.2);
+        color: #f44336;
+        border: 1px solid #f44336;
+      }
+
+      /* Sidebar */
+      .sidebar {
+        width: 400px;
+        background: #2a2a2a;
+        border-right: 1px solid #3a3a3a;
+        padding-top: 60px;
+        overflow-y: auto;
+        height: 100vh;
+      }
+
+      .sidebar-header {
+        padding: 20px;
+        border-bottom: 1px solid #3a3a3a;
+      }
+
+      .search-bar {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+
+      .search-input {
+        flex: 1;
+        padding: 8px 12px;
+        background: #1a1a1a;
+        border: 1px solid #3a3a3a;
+        border-radius: 6px;
+        color: #e0e0e0;
+        font-size: 14px;
+      }
+
+      .search-input:focus {
+        outline: none;
+        border-color: #4fc3f7;
+      }
+
+      .filter-btn {
+        padding: 8px 16px;
+        background: #3a3a3a;
+        border: 1px solid #4a4a4a;
+        border-radius: 6px;
+        color: #e0e0e0;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .filter-btn:hover {
+        background: #4a4a4a;
+      }
+
+      .status-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .status-chip {
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: all 0.2s ease;
+      }
+
+      .status-chip.active {
+        border-color: #4fc3f7;
+      }
+
+      .status-chip.inactive {
+        background: rgba(117, 117, 117, 0.3);
+        color: #757575;
+      }
+      .status-chip.working {
+        background: rgba(255, 193, 7, 0.3);
+        color: #ffc107;
+      }
+      .status-chip.complete {
+        background: rgba(76, 175, 80, 0.3);
+        color: #4caf50;
+      }
+      .status-chip.done {
+        background: rgba(139, 195, 74, 0.3);
+        color: #8bc34a;
+      }
+      .status-chip.error {
+        background: rgba(244, 67, 54, 0.3);
+        color: #f44336;
+      }
+      .status-chip.flagged {
+        background: rgba(255, 87, 34, 0.3);
+        color: #ff5722;
+      }
+
+      /* Job List */
+      .job-list {
+        flex: 1;
+      }
+
+      .job-list-header {
+        display: flex;
+        align-items: center;
+        padding: 15px 20px;
+        background: #333;
+        border-bottom: 1px solid #3a3a3a;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .job-list-header .col-index {
+        width: 80px;
+      }
+      .job-list-header .col-status {
+        width: 100px;
+      }
+      .job-list-header .col-actions {
+        width: 60px;
+      }
+
+      .job-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 20px;
+        border-bottom: 1px solid #3a3a3a;
+        cursor: pointer;
+        transition: background 0.2s ease;
+      }
+
+      .job-item:hover {
+        background: #333;
+      }
+
+      .job-item.selected {
+        background: #4fc3f7;
+        color: #000;
+      }
+
+      .job-item.selected .job-status {
+        color: #000;
+      }
+
+      .job-index {
+        width: 80px;
+        font-weight: 500;
+        font-size: 14px;
+      }
+
+      .job-status {
+        width: 100px;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+        text-align: center;
+        text-transform: uppercase;
+      }
+
+      .job-actions {
+        width: 60px;
+        display: flex;
+        gap: 4px;
+      }
+
+      .action-btn {
+        width: 24px;
+        height: 24px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+      }
+
+      .action-btn.flag {
+        background: #ff5722;
+        color: white;
+      }
+
+      .action-btn.reset {
+        background: #757575;
+        color: white;
+      }
+
+      /* Main Content */
+      .main-content {
+        flex: 1;
+        padding-top: 60px;
+        background: #1a1a1a;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .job-detail {
+        flex: 1;
+        padding: 30px;
+        overflow-y: auto;
+      }
+
+      .job-detail-header {
+        margin-bottom: 30px;
+      }
+
+      .job-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: #4fc3f7;
+        margin-bottom: 10px;
+      }
+
+      .job-meta {
+        color: #999;
+        font-size: 14px;
+      }
+
+      .preview-section {
+        margin-bottom: 30px;
+      }
+
+      .preview-image {
+        width: 100%;
+        max-width: 600px;
+        height: 400px;
+        background: #2a2a2a;
+        border-radius: 8px;
+        border: 1px solid #3a3a3a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        margin-bottom: 20px;
+      }
+
+      .preview-image img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+      }
+
+      .no-preview {
+        color: #666;
+        font-size: 16px;
+      }
+
+      .traits-section {
+        background: #2a2a2a;
+        border-radius: 8px;
+        border: 1px solid #3a3a3a;
+        padding: 20px;
+      }
+
+      .traits-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: #e0e0e0;
+      }
+
+      .trait-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #3a3a3a;
+      }
+
+      .trait-item:last-child {
+        border-bottom: none;
+      }
+
+      .trait-label {
+        color: #999;
+        font-weight: 500;
+      }
+
+      .trait-value {
+        color: #e0e0e0;
+      }
+
+      .empty-state {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #666;
+      }
+
+      .empty-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+      }
+
+      .pagination {
+        padding: 15px 20px;
+        border-top: 1px solid #3a3a3a;
+        display: flex;
+        align-items: center;
+        justify-content: between;
+        font-size: 14px;
+        color: #999;
+      }
+
+      .pagination-info {
+        flex: 1;
+      }
+
+      .pagination-controls {
+        display: flex;
+        gap: 8px;
+      }
+
+      .page-btn {
+        padding: 6px 12px;
+        background: #3a3a3a;
+        border: 1px solid #4a4a4a;
+        border-radius: 4px;
+        color: #e0e0e0;
+        cursor: pointer;
+        font-size: 12px;
+      }
+
+      .page-btn:hover {
+        background: #4a4a4a;
+      }
+
+      .page-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .page-btn.active {
+        background: #4fc3f7;
+        color: #000;
+        border-color: #4fc3f7;
+      }
+
+      .loading {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #666;
+        font-size: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- Header -->
+      <div class="header">
+        <div class="header-left">
+          <div class="logo">RenderFlow</div>
+        </div>
+        <div class="header-right">
+          <div class="connection-status" id="connectionStatus">
+            Connecting...
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <div class="search-bar">
+            <input
+              type="text"
+              class="search-input"
+              placeholder="Jump to index..."
+              id="jumpToIndex"
+            />
+            <button class="filter-btn" id="filterBtn">🔍 Filter Status</button>
+          </div>
+          <div class="status-filters" id="statusFilters">
+            <div class="status-chip inactive" data-status="inactive">
+              Inactive
+            </div>
+            <div class="status-chip working" data-status="working">Working</div>
+            <div class="status-chip complete" data-status="complete">
+              Complete
+            </div>
+            <div class="status-chip done" data-status="done">Done</div>
+            <div class="status-chip error" data-status="error">Error</div>
+            <div class="status-chip flagged" data-status="flagged">Flagged</div>
+          </div>
+        </div>
+
+        <div class="job-list">
+          <div class="job-list-header">
+            <div class="col-index">Index</div>
+            <div class="col-status">Status</div>
+            <div class="col-actions"></div>
+          </div>
+          <div class="job-items" id="jobItems">
+            <div class="loading">Loading jobs...</div>
+          </div>
+          <div class="pagination" id="pagination">
+            <div class="pagination-info" id="paginationInfo">
+              Page 1 of 3 • Show per page: 20
+            </div>
+            <div class="pagination-controls">
+              <button class="page-btn" id="prevBtn">←</button>
+              <button class="page-btn" id="nextBtn">→</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <div class="job-detail" id="jobDetail">
+          <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            <h3>Select a job to view details</h3>
+            <p>
+              Choose a job from the list to see its status, preview, and
+              attributes
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      class RenderFlow {
+        constructor() {
+          this.ws = null;
+          this.currentPage = 0;
+          this.limit = 20;
+          this.statusFilter = [];
+          this.jobs = [];
+          this.stats = {};
+          this.selectedJob = null;
+
+          this.initWebSocket();
+          this.initEventListeners();
+          this.loadJobs();
+          this.loadStats();
+        }
+
+        initWebSocket() {
+          const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+          this.ws = new WebSocket(`${protocol}//${location.host}/ws`);
+
+          this.ws.onopen = () => {
+            this.updateConnectionStatus(true);
+          };
+
+          this.ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            this.handleWebSocketMessage(data);
+          };
+
+          this.ws.onclose = () => {
+            this.updateConnectionStatus(false);
+            // Reconnect after 3 seconds
+            setTimeout(() => this.initWebSocket(), 3000);
+          };
+
+          this.ws.onerror = () => {
+            this.updateConnectionStatus(false);
+          };
+        }
+
+        updateConnectionStatus(connected) {
+          const status = document.getElementById("connectionStatus");
+          status.textContent = connected ? "🟢 Connected" : "🔴 Disconnected";
+          status.className = `connection-status ${
+            connected ? "connected" : "disconnected"
+          }`;
+        }
+
+        handleWebSocketMessage(data) {
+          if (data.type === "job_update") {
+            // Find and update the job in current view
+            const jobIndex = this.jobs.findIndex(
+              (job) => job.id === data.job_id
+            );
+            if (jobIndex !== -1) {
+              this.jobs[jobIndex].status = data.status;
+              this.renderJobs();
+
+              // Update detail view if this job is selected
+              if (this.selectedJob && this.selectedJob.id === data.job_id) {
+                this.selectedJob.status = data.status;
+                this.renderJobDetail();
+              }
+            }
+            this.loadStats(); // Update stats
+          }
+        }
+
+        initEventListeners() {
+          // Status filter chips
+          document.querySelectorAll(".status-chip").forEach((chip) => {
+            chip.addEventListener("click", () => {
+              chip.classList.toggle("active");
+              this.updateStatusFilter();
+            });
+          });
+
+          // Jump to index
+          document
+            .getElementById("jumpToIndex")
+            .addEventListener("keydown", (e) => {
+              if (e.key === "Enter") {
+                const index = parseInt(e.target.value);
+                if (index && index >= 1 && index <= 100000) {
+                  this.jumpToJob(index);
+                }
+              }
+            });
+
+          // Pagination
+          document.getElementById("prevBtn").addEventListener("click", () => {
+            if (this.currentPage > 0) {
+              this.currentPage--;
+              this.loadJobs();
+            }
+          });
+
+          document.getElementById("nextBtn").addEventListener("click", () => {
+            this.currentPage++;
+            this.loadJobs();
+          });
+        }
+
+        updateStatusFilter() {
+          const activeChips = document.querySelectorAll(".status-chip.active");
+          this.statusFilter = Array.from(activeChips).map(
+            (chip) => chip.dataset.status
+          );
+          this.currentPage = 0;
+          this.loadJobs();
+        }
+
+        async jumpToJob(index) {
+          // Calculate which page the job would be on
+          const jobsPerPage = this.limit;
+          const page = Math.floor((index - 1) / jobsPerPage);
+          this.currentPage = page;
+          await this.loadJobs();
+
+          // Select the job
+          const job = this.jobs.find((j) => j.id === index);
+          if (job) {
+            this.selectJob(job);
+          }
+        }
+
+        async loadJobs() {
+          try {
+            const params = new URLSearchParams({
+              limit: this.limit,
+              offset: this.currentPage * this.limit,
+            });
+
+            if (this.statusFilter.length > 0) {
+              params.append("status", this.statusFilter.join(","));
+            }
+
+            const response = await fetch(`/jobs?${params}`);
+            const data = await response.json();
+            this.jobs = data.jobs;
+            this.renderJobs();
+            this.updatePagination();
+          } catch (error) {
+            console.error("Failed to load jobs:", error);
+          }
+        }
+
+        async loadStats() {
+          try {
+            const response = await fetch("/stats");
+            const data = await response.json();
+            this.stats = data.stats;
+          } catch (error) {
+            console.error("Failed to load stats:", error);
+          }
+        }
+
+        renderJobs() {
+          const container = document.getElementById("jobItems");
+
+          if (this.jobs.length === 0) {
+            container.innerHTML = '<div class="loading">No jobs found</div>';
+            return;
+          }
+
+          const html = this.jobs
+            .map(
+              (job) => `
+                    <div class="job-item ${
+                      this.selectedJob && this.selectedJob.id === job.id
+                        ? "selected"
+                        : ""
+                    }" 
+                         onclick="renderFlow.selectJob(${JSON.stringify(
+                           job
+                         ).replace(/"/g, "&quot;")})">
+                        <div class="job-index">${job.id}</div>
+                        <div class="job-status ${job.status}">${
+                job.status.charAt(0).toUpperCase() + job.status.slice(1)
+              }</div>
+                        <div class="job-actions">
+                            <button class="action-btn flag" onclick="event.stopPropagation(); renderFlow.flagJob(${
+                              job.id
+                            })" title="Flag">🚩</button>
+                            <button class="action-btn reset" onclick="event.stopPropagation(); renderFlow.resetJob(${
+                              job.id
+                            })" title="Reset">↻</button>
+                        </div>
+                    </div>
+                `
+            )
+            .join("");
+
+          container.innerHTML = html;
+        }
+
+        updatePagination() {
+          const info = document.getElementById("paginationInfo");
+          const prevBtn = document.getElementById("prevBtn");
+          const nextBtn = document.getElementById("nextBtn");
+
+          const start = this.currentPage * this.limit + 1;
+          const end = Math.min(
+            start + this.limit - 1,
+            start + this.jobs.length - 1
+          );
+
+          info.textContent = `Jobs ${start}-${end} • Show per page: ${this.limit}`;
+
+          prevBtn.disabled = this.currentPage === 0;
+          nextBtn.disabled = this.jobs.length < this.limit;
+        }
+
+        selectJob(job) {
+          this.selectedJob = job;
+          this.renderJobs(); // Re-render to update selection
+          this.renderJobDetail();
+        }
+
+        async renderJobDetail() {
+          const container = document.getElementById("jobDetail");
+
+          if (!this.selectedJob) {
+            container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">📋</div>
+                            <h3>Select a job to view details</h3>
+                            <p>Choose a job from the list to see its status, preview, and attributes</p>
+                        </div>
+                    `;
+            return;
+          }
+
+          const job = this.selectedJob;
+
+          try {
+            const response = await fetch(`/preview/${job.id}`);
+            const previewData = await response.json();
+
+            const html = `
+                        <div class="job-detail-header">
+                            <div class="job-title">Job #${job.id}</div>
+                            <div class="job-meta">Attributes for job ${
+                              job.id
+                            }</div>
+                        </div>
+                        
+                        <div class="preview-section">
+                            <div class="preview-image" id="previewImage-${
+                              job.id
+                            }">
+                                <div class="no-preview">Loading preview...</div>
+                            </div>
+                        </div>
+                        
+                        <div class="traits-section">
+                            <div class="traits-title">Job Traits</div>
+                            <div class="trait-item">
+                                <div class="trait-label">Scene</div>
+                                <div class="trait-value">${
+                                  previewData.traits?.scene || "Main"
+                                }</div>
+                            </div>
+                            <div class="trait-item">
+                                <div class="trait-label">Resolution</div>
+                                <div class="trait-value">${
+                                  previewData.traits?.resolution || "1920x1080"
+                                }</div>
+                            </div>
+                            <div class="trait-item">
+                                <div class="trait-label">Frame Rate</div>
+                                <div class="trait-value">${
+                                  previewData.traits?.frame_rate || "30"
+                                }</div>
+                            </div>
+                            <div class="trait-item">
+                                <div class="trait-label">Status</div>
+                                <div class="trait-value">
+                                    <span class="job-status ${job.status}">${
+              job.status.charAt(0).toUpperCase() + job.status.slice(1)
+            }</span>
+                                </div>
+                            </div>
+                            <div class="trait-item">
+                                <div class="trait-label">Updated</div>
+                                <div class="trait-value">${new Date(
+                                  job.updated_at
+                                ).toLocaleString()}</div>
+                            </div>
+                        </div>
+                    `;
+
+            container.innerHTML = html;
+
+            // Load preview image
+            this.loadPreviewImage(job.id, previewData.image_url);
+          } catch (error) {
+            console.error("Failed to load job details:", error);
+          }
+        }
+
+        loadPreviewImage(jobId, imageUrl) {
+          const previewElement = document.getElementById(
+            `previewImage-${jobId}`
+          );
+
+          const img = new Image();
+          img.onload = () => {
+            previewElement.innerHTML = `<img src="${imageUrl}" alt="Job ${jobId}">`;
+          };
+          img.onerror = () => {
+            previewElement.innerHTML =
+              '<div class="no-preview">No preview available</div>';
+          };
+          img.src = imageUrl;
+        }
+
+        async flagJob(jobId) {
+          try {
+            const response = await fetch(`/job/${jobId}/flag`, {
+              method: "POST",
+            });
+            if (response.ok) {
+              console.log(`Job ${jobId} flagged`);
+            }
+          } catch (error) {
+            console.error(`Failed to flag job ${jobId}:`, error);
+          }
+        }
+
+        async resetJob(jobId) {
+          try {
+            const response = await fetch(`/job/${jobId}/reset`, {
+              method: "POST",
+            });
+            if (response.ok) {
+              console.log(`Job ${jobId} reset`);
+            }
+          } catch (error) {
+            console.error(`Failed to reset job ${jobId}:`, error);
+          }
+        }
+      }
+
+      // Initialize RenderFlow
+      const renderFlow = new RenderFlow();
+    </script>
+  </body>
+</html>

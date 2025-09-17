@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RenderFlow</title>
+    <!-- JetBrains Mono Nerd Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* Nord Color Palette */
+      :root {
+        --nord0: #2e3440; /* Polar Night - darkest */
+        --nord1: #3b4252; /* Polar Night */
+        --nord2: #434c5e; /* Polar Night */
+        --nord3: #4c566a; /* Polar Night - lightest */
+        --nord4: #d8dee9; /* Snow Storm */
+        --nord5: #e5e9f0; /* Snow Storm */
+        --nord6: #eceff4; /* Snow Storm - lightest */
+        --nord7: #8fbcbb; /* Frost - light blue */
+        --nord8: #88c0d0; /* Frost - blue */
+        --nord9: #81a1c1; /* Frost - dark blue */
+        --nord10: #5e81ac; /* Frost - darkest blue */
+        --nord11: #bf616a; /* Aurora - red */
+        --nord12: #d08770; /* Aurora - orange */
+        --nord13: #ebcb8b; /* Aurora - yellow */
+        --nord14: #a3be8c; /* Aurora - green */
+        --nord15: #b48ead; /* Aurora - purple */
+
+        /* Font Family */
+        --font-family: "JetBrains Mono", "Fira Code", "SF Mono", "Monaco",
+          "Inconsolata", "Roboto Mono", monospace;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: var(--font-family);
+        background: var(--nord0);
+        color: var(--nord5);
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .app-container {
+        display: flex;
+        height: 100vh;
+      }
+
+      /* Sidebar */
+      .sidebar {
+        width: 500px;
+        background: var(--nord1);
+        border-right: 1px solid var(--nord2);
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .status-chip {
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-size: 11px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: all 0.2s ease;
+        opacity: 1;
+        font-weight: 500;
+      }
+
+      .status-chip.hidden {
+        opacity: 0.3;
+        text-decoration: line-through;
+      }
+
+      .status-chip.active {
+        box-shadow: 0 0 0 2px var(--nord8);
+        transform: scale(1.05);
+      }
+
+      /* Status Colors using Nord palette */
+      .status-chip.inactive,
+      .job-status.inactive {
+        background: rgba(76, 86, 106, 0.3);
+        color: var(--nord4);
+      }
+      .status-chip.working,
+      .job-status.working {
+        background: var(--nord13);
+        color: var(--nord0);
+        display: flex;
+        align-items: center;
+        position: relative;
+        justify-content: center;
+      }
+
+      .working-content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .working-right {
+        position: absolute;
+        right: 6px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.75em;
+      }
+
+      .elapsed-time {
+        opacity: 0.8;
+        font-weight: normal;
+      }
+
+      .worker-link {
+        color: var(--nord0);
+        text-decoration: none;
+        font-size: 0.8em;
+        margin-left: 4px;
+        padding: 1px 4px;
+        border-radius: 3px;
+        background: transparent;
+        border: 1px solid var(--nord0);
+        transition: all 0.2s ease;
+      }
+
+      .worker-link:hover {
+        background: var(--nord8);
+        color: var(--nord1);
+      }
+
+      /* Flagged toggle button */
+      .flagged-toggle {
+        background: var(--nord1);
+        color: var(--nord13);
+        border: 1px solid var(--nord13);
+        border-radius: 4px;
+        padding: 6px 12px;
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      .flagged-toggle:hover {
+        background: var(--nord13);
+        color: var(--nord1);
+      }
+
+      .flagged-toggle.flagged {
+        background: var(--nord13);
+        color: var(--nord1);
+      }
+
+      /* Star toggle button */
+      .star-toggle {
+        background: var(--nord1);
+        color: var(--nord11);
+        border: 1px solid var(--nord11);
+        border-radius: 4px;
+        padding: 6px 12px;
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      .star-toggle:hover {
+        background: var(--nord11);
+        color: var(--nord1);
+      }
+
+      .star-toggle.starred {
+        background: var(--nord11);
+        color: var(--nord1);
+      }
+
+      /* Flagged jobs popup */
+      .flagged-popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--nord1);
+        border: 1px solid var(--nord3);
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        padding: 0;
+        width: 500px;
+        max-width: 80vw;
+        z-index: 1000;
+        display: none;
+      }
+
+      .flagged-popup-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--nord3);
+      }
+
+      .flagged-popup-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--nord13);
+        margin: 0;
+      }
+
+      .flagged-popup-close {
+        background: none;
+        border: none;
+        color: var(--nord4);
+        font-size: 18px;
+        cursor: pointer;
+        padding: 4px;
+        line-height: 1;
+        transition: color 0.2s ease;
+      }
+
+      .flagged-popup-close:hover {
+        color: var(--nord13);
+      }
+
+      .flagged-popup-body {
+        padding: 20px;
+      }
+
+      .flagged-popup-textarea {
+        width: 100%;
+        min-height: 120px;
+        max-height: 300px;
+        background: var(--nord0);
+        border: 1px solid var(--nord2);
+        border-radius: 4px;
+        padding: 12px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        color: var(--nord6);
+        resize: vertical;
+        outline: none;
+        line-height: 1.4;
+        box-sizing: border-box;
+      }
+
+      .flagged-popup-textarea:focus {
+        border-color: var(--nord8);
+      }
+
+      .flagged-popup-textarea::selection {
+        background: var(--nord8);
+        color: var(--nord1);
+      }
+
+      /* Popup overlay */
+      .flagged-popup-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        display: none;
+      }
+
+      .worker-link-detail {
+        color: var(--nord8);
+        text-decoration: none;
+        font-size: 1em;
+        padding: 2px 6px;
+        border-radius: 3px;
+        background: rgba(136, 192, 208, 0.1);
+        border: 1px solid var(--nord8);
+        transition: all 0.2s ease;
+      }
+
+      .worker-link-detail:hover {
+        background: var(--nord8);
+        color: var(--nord0);
+      }
+      .status-chip.complete,
+      .job-status.complete {
+        background: var(--nord14);
+        color: var(--nord0);
+      }
+      .status-chip.done,
+      .job-status.done {
+        background: var(--nord7);
+        color: var(--nord0);
+      }
+      .status-chip.error,
+      .job-status.error {
+        background: var(--nord11);
+        color: var(--nord6);
+      }
+      .status-chip.flagged,
+      .job-status.flagged {
+        background: var(--nord12);
+        color: var(--nord0);
+      }
+      .status-chip.starred,
+      .job-status.starred {
+        background: var(--nord11);
+        color: var(--nord0);
+      }
+
+      /* Job List */
+      .job-list {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .job-list-header {
+        display: flex;
+        align-items: center;
+        padding: 12px 20px;
+        background: var(--nord2);
+        border-bottom: 1px solid var(--nord3);
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: var(--nord4);
+        letter-spacing: 0.5px;
+      }
+
+      .job-list-header .col-index {
+        width: 60px;
+        text-align: center;
+      }
+      .job-list-header .col-status {
+        flex: 1;
+        text-align: center;
+      }
+
+      .job-items {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px 0;
+      }
+
+      .job-items::-webkit-scrollbar {
+        display: none;
+      }
+
+      .job-items {
+        scrollbar-width: none;
+      }
+
+      .job-item {
+        display: flex;
+        align-items: center;
+        padding: 8px 20px;
+        border-bottom: 1px solid rgba(76, 86, 106, 0.3);
+        cursor: pointer;
+        transition: background 0.15s ease;
+      }
+
+      .job-item:hover {
+        background: rgba(76, 86, 106, 0.2);
+      }
+
+      .job-item.selected {
+        background: rgba(136, 192, 208, 0.15);
+        border-left: 3px solid var(--nord8);
+      }
+
+      .job-item.hidden {
+        display: none;
+      }
+
+      .job-index {
+        width: 60px;
+        font-weight: 500;
+        font-size: 13px;
+        text-align: center;
+        color: var(--nord6);
+      }
+
+      .job-status {
+        flex: 1;
+        padding: 4px 10px;
+        border-radius: 10px;
+        font-size: 10px;
+        font-weight: 600;
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+
+      .job-star {
+        width: 30px;
+        text-align: center;
+        font-size: 14px;
+        cursor: pointer;
+        transition: opacity 0.2s ease;
+        user-select: none;
+      }
+
+      .job-star.not-starred {
+        opacity: 0.2;
+      }
+
+      .job-star.starred {
+        opacity: 1;
+      }
+
+      .job-star:hover {
+        opacity: 0.7;
+      }
+
+      /* Main Content */
+      .main-content {
+        flex: 1;
+        background: var(--nord0);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .job-detail {
+        flex: 1;
+        padding: 30px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .job-detail::-webkit-scrollbar {
+        display: none;
+      }
+
+      .job-detail {
+        scrollbar-width: none;
+      }
+
+      .job-detail-header {
+        margin-bottom: 25px;
+      }
+
+      .job-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: var(--nord6);
+        margin-bottom: 5px;
+      }
+
+      .job-meta {
+        color: var(--nord4);
+        font-size: 13px;
+      }
+
+      /* Responsive layout for wide screens */
+      @media (min-width: 1400px) {
+        .job-detail-content {
+          display: flex;
+          gap: 30px;
+          flex: 1;
+        }
+
+        .preview-section {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .traits-section {
+          width: 350px;
+          flex-shrink: 0;
+          align-self: flex-start;
+        }
+
+        .preview-image {
+          flex: 1;
+          max-height: calc(100vh - 200px);
+        }
+      }
+
+      @media (max-width: 1399px) {
+        .job-detail-content {
+          display: flex;
+          flex-direction: column;
+          gap: 25px;
+        }
+
+        .preview-section {
+          margin-bottom: 0;
+        }
+      }
+
+      .preview-section {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .preview-image {
+        width: 100%;
+        background: var(--nord1);
+        border-radius: 8px;
+        border: 1px solid var(--nord2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        margin-bottom: 15px;
+        min-height: 300px;
+      }
+
+      .preview-image img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        border-radius: 7px;
+      }
+
+      .no-preview {
+        color: var(--nord4);
+        font-size: 14px;
+      }
+
+      .image-url-link {
+        margin-top: 10px;
+        text-align: center;
+      }
+
+      .url-link {
+        color: var(--nord8);
+        text-decoration: none;
+        font-size: 12px;
+        font-family: monospace;
+        background: var(--nord1);
+        padding: 6px 12px;
+        border-radius: 6px;
+        border: 1px solid var(--nord2);
+        display: inline-block;
+        transition: all 0.2s ease;
+        word-break: break-all;
+      }
+
+      .url-link:hover {
+        background: var(--nord2);
+        border-color: var(--nord8);
+        color: var(--nord9);
+      }
+
+      .traits-section {
+        background: var(--nord1);
+        border-radius: 8px;
+        border: 1px solid var(--nord2);
+        padding: 20px;
+      }
+
+      .traits-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: var(--nord5);
+      }
+
+      .trait-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(76, 86, 106, 0.3);
+      }
+
+      .trait-item:last-child {
+        border-bottom: none;
+      }
+
+      .trait-label {
+        color: var(--nord4);
+        font-weight: 500;
+        font-size: 13px;
+      }
+
+      .trait-value {
+        color: var(--nord6);
+        font-size: 13px;
+        text-align: right;
+      }
+
+      .empty-state {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: var(--nord4);
+      }
+
+      .empty-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+      }
+
+      .loading {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--nord4);
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <div class="job-list">
+          <div class="job-list-header">
+            <div class="col-index">Index</div>
+            <div class="col-status">Status</div>
+          </div>
+          <div class="job-items" id="jobItems">
+            <div class="loading">Loading jobs...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <div class="job-detail" id="jobDetail">
+          <div class="empty-state">
+            <div class="empty-icon">▦</div>
+            <h3>Select a job to view details</h3>
+            <p>
+              Choose a job from the list to see its status, preview, and
+              attributes
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Flagged jobs popup overlay and modal -->
+    <div
+      class="flagged-popup-overlay"
+      id="flaggedPopupOverlay"
+      onclick="renderFlow.closeFlaggedPopup()"
+    ></div>
+    <div class="flagged-popup" id="flaggedPopup">
+      <div class="flagged-popup-header">
+        <h3 class="flagged-popup-title">Flagged Jobs</h3>
+        <button
+          class="flagged-popup-close"
+          onclick="renderFlow.closeFlaggedPopup()"
+          title="Close"
+        >
+          ×
+        </button>
+      </div>
+      <div class="flagged-popup-body">
+        <textarea
+          class="flagged-popup-textarea"
+          id="flaggedPopupTextarea"
+          readonly
+          placeholder="No flagged jobs"
+        ></textarea>
+      </div>
+    </div>
+
+    <script>
+      class RenderFlow {
+        constructor() {
+          this.ws = null;
+          this.currentPage = 0;
+          this.limit = 200; // Default to 200
+          this.hiddenStatuses = new Set(); // Track hidden statuses
+          this.starredFilter = false; // Track if showing only starred jobs
+          this.jobs = [];
+          this.stats = {};
+          this.selectedJob = null;
+          this.hoveredJob = null;
+
+          this.initWebSocket();
+          this.initEventListeners();
+          this.loadJobs();
+          this.loadStats();
+
+          // Start timer for updating elapsed times
+          this.startElapsedTimeUpdater();
+        }
+
+        getStatusIcon(status) {
+          const icons = {
+            inactive: "○",
+            working: "⚙",
+            complete: "✓",
+            done: "◉",
+            error: "✕",
+            flagged: "⚠",
+          };
+          return icons[status] || "○";
+        }
+
+        formatElapsedTime(elapsedSeconds) {
+          if (!elapsedSeconds) return "";
+
+          const hours = Math.floor(elapsedSeconds / 3600);
+          const minutes = Math.floor((elapsedSeconds % 3600) / 60);
+          const seconds = elapsedSeconds % 60;
+
+          if (hours > 0) {
+            return `${hours}h ${minutes}m`;
+          } else if (minutes > 0) {
+            return `${minutes}m ${seconds}s`;
+          } else {
+            return `${seconds}s`;
+          }
+        }
+
+        startElapsedTimeUpdater() {
+          // Update elapsed times every second for working jobs
+          setInterval(() => {
+            this.updateElapsedTimes();
+          }, 1000);
+        }
+
+        updateElapsedTimes() {
+          // Update elapsed times for all working jobs without full re-render
+          this.jobs.forEach((job) => {
+            if (job.status === "working" && job.elapsed_time !== null) {
+              job.elapsed_time += 1;
+              // Update the DOM element
+              const jobElement = document.querySelector(
+                `[data-job-id="${job.id}"] .job-status`
+              );
+              if (jobElement) {
+                const timeStr = this.formatElapsedTime(job.elapsed_time);
+                const statusIcon = this.getStatusIcon("working");
+                const workerLink = job.worker_url
+                  ? `<a href="${job.worker_url}" target="_blank" class="worker-link" title="Open worker UI">▶</a>`
+                  : "";
+
+                jobElement.innerHTML = `
+                  <div class="working-content">${statusIcon} Working</div>
+                  <div class="working-right">
+                    <span class="elapsed-time">${timeStr}</span>
+                    ${workerLink}
+                  </div>
+                `;
+              }
+            }
+          });
+        }
+
+        initWebSocket() {
+          const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+          this.ws = new WebSocket(`${protocol}//${location.host}/ws`);
+
+          this.ws.onopen = () => {
+            this.updateConnectionStatus(true);
+          };
+
+          this.ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            this.handleWebSocketMessage(data);
+          };
+
+          this.ws.onclose = () => {
+            this.updateConnectionStatus(false);
+            // Reconnect after 3 seconds
+            setTimeout(() => this.initWebSocket(), 3000);
+          };
+
+          this.ws.onerror = () => {
+            this.updateConnectionStatus(false);
+          };
+        }
+
+        updateConnectionStatus(connected) {
+          const status = document.getElementById("connectionStatus");
+          status.textContent = connected ? "● Connected" : "○ Disconnected";
+          status.className = `connection-status ${
+            connected ? "connected" : "disconnected"
+          }`;
+        }
+
+        handleWebSocketMessage(data) {
+          if (data.type === "job_update") {
+            // Reload jobs to get complete updated data including elapsed_time and worker_url
+            this.loadJobs();
+            this.loadStats(); // Update stats
+          }
+        }
+
+        initEventListeners() {
+          // Status filter chips - click to hide/show status
+          document.querySelectorAll(".status-chip").forEach((chip) => {
+            chip.addEventListener("click", () => {
+              const status = chip.dataset.status;
+              
+              // Handle regular status filters (no more special case for starred)
+              if (this.hiddenStatuses.has(status)) {
+                this.hiddenStatuses.delete(status);
+                chip.classList.remove("hidden");
+              } else {
+                this.hiddenStatuses.add(status);
+                chip.classList.add("hidden");
+              }
+              
+              this.renderJobs(); // Re-render with new filters
+            });
+          });          // Jump to index
+          document
+            .getElementById("jumpToIndex")
+            .addEventListener("keydown", (e) => {
+              if (e.key === "Enter") {
+                const index = parseInt(e.target.value);
+                if (index && index >= 1 && index <= 100000) {
+                  this.jumpToJob(index);
+                }
+              }
+            });
+
+          // Per page input - auto update on input
+          const perPageInput = document.getElementById("perPageInput");
+          perPageInput.addEventListener("input", (e) => {
+            const newLimit = parseInt(e.target.value);
+            if (newLimit && newLimit >= 1 && newLimit <= 10000) {
+              this.limit = newLimit;
+              this.currentPage = 0; // Reset to first page
+              this.loadJobs();
+            }
+          });
+
+          // Also handle Enter key for per page input
+          perPageInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              const newLimit = parseInt(e.target.value);
+              if (newLimit && newLimit >= 1 && newLimit <= 10000) {
+                this.limit = newLimit;
+                this.currentPage = 0; // Reset to first page
+                this.loadJobs();
+              }
+            }
+          });
+
+          // Pagination
+          document.getElementById("prevBtn").addEventListener("click", () => {
+            if (this.currentPage > 0) {
+              this.currentPage--;
+              this.loadJobs();
+            }
+          });
+
+          document.getElementById("nextBtn").addEventListener("click", () => {
+            this.currentPage++;
+            this.loadJobs();
+          });
+        }
+
+        async jumpToJob(index) {
+          // Calculate which page the job would be on
+          const jobsPerPage = this.limit;
+          const page = Math.floor((index - 1) / jobsPerPage);
+          this.currentPage = page;
+          await this.loadJobs();
+
+          // Select the job
+          const job = this.jobs.find((j) => j.id === index);
+          if (job) {
+            this.selectJob(job);
+          }
+        }
+
+        async loadJobs() {
+          try {
+            const params = new URLSearchParams({
+              limit: this.limit,
+              offset: this.currentPage * this.limit,
+            });
+
+            const response = await fetch(`/jobs?${params}`);
+            const data = await response.json();
+            this.jobs = data.jobs;
+            this.renderJobs();
+            this.updatePagination();
+          } catch (error) {
+            console.error("Failed to load jobs:", error);
+          }
+        }
+
+        async loadStats() {
+          try {
+            const response = await fetch("/stats");
+            const data = await response.json();
+            this.stats = data.stats;
+            this.updateStatusCounts();
+          } catch (error) {
+            console.error("Failed to load stats:", error);
+          }
+        }
+
+        updateStatusCounts() {
+          // Update each status count display
+          const statusTypes = [
+            "inactive",
+            "working",
+            "complete",
+            "done",
+            "error",
+            "flagged",
+          ];
+          statusTypes.forEach((status) => {
+            const countElement = document.getElementById(`count-${status}`);
+            if (countElement && this.stats[status] !== undefined) {
+              countElement.textContent = this.stats[status].toLocaleString();
+            }
+          });
+        }
+
+        renderJobs() {
+          const container = document.getElementById("jobItems");
+
+          if (this.jobs.length === 0) {
+            container.innerHTML = '<div class="loading">No jobs found</div>';
+            return;
+          }
+
+          const html = this.jobs
+            .filter((job) => {
+              // Apply starred filter if active
+              if (this.starredFilter && !job.starred) {
+                return false;
+              }
+              return true;
+            })
+            .map((job) => {
+              const isHidden = this.hiddenStatuses.has(job.status);
+
+              // Get status icon
+              const statusIcon = this.getStatusIcon(job.status);
+
+              // Format status display with elapsed time and worker link for working jobs
+              let statusDisplay =
+                job.status.charAt(0).toUpperCase() + job.status.slice(1);
+              if (job.status === "working") {
+                const timeStr =
+                  job.elapsed_time !== null
+                    ? this.formatElapsedTime(job.elapsed_time)
+                    : "";
+                const workerLink = job.worker_url
+                  ? `<a href="${job.worker_url}" target="_blank" class="worker-link" title="Open worker UI">→</a>`
+                  : "";
+
+                statusDisplay = `
+                  <div class="working-content">${statusIcon} Working</div>
+                  <div class="working-right">
+                    ${
+                      timeStr
+                        ? `<span class="elapsed-time">${timeStr}</span>`
+                        : ""
+                    }
+                    ${workerLink}
+                  </div>
+                `;
+              } else {
+                statusDisplay = `${statusIcon} ${statusDisplay}`;
+              }
+
+              return `
+                        <div class="job-item ${
+                          this.selectedJob && this.selectedJob.id === job.id
+                            ? "selected"
+                            : ""
+                        } ${isHidden ? "hidden" : ""}"
+                             data-job-id="${job.id}"
+                             onmouseenter="renderFlow.hoverJob(${JSON.stringify(
+                               job
+                             ).replace(/"/g, "&quot;")})"
+                             onclick="renderFlow.selectJob(${JSON.stringify(
+                               job
+                             ).replace(/"/g, "&quot;")})">
+                            <div class="job-index">${job.id}</div>
+                            <div class="job-status ${
+                              job.status
+                            }">${statusDisplay}</div>
+                            <div class="job-star ${
+                              job.starred ? "starred" : "not-starred"
+                            }" onclick="renderFlow.toggleJobStar(${
+                job.id
+              }); event.stopPropagation();" title="${
+                job.starred ? "Remove star" : "Add star"
+              }">⭐</div>
+                        </div>
+                    `;
+            })
+            .join("");
+
+          container.innerHTML = html;
+        }
+
+        updatePagination() {
+          const headerPageInfo = document.getElementById("headerPageInfo");
+          const prevBtn = document.getElementById("prevBtn");
+          const nextBtn = document.getElementById("nextBtn");
+          const perPageInput = document.getElementById("perPageInput");
+
+          const total = Math.ceil(100000 / this.limit);
+
+          // Update the input value to match current limit
+          perPageInput.value = this.limit;
+
+          // Update header page info
+          headerPageInfo.textContent = `${this.currentPage + 1} of ${total}`;
+
+          prevBtn.disabled = this.currentPage === 0;
+          nextBtn.disabled = this.jobs.length < this.limit;
+        }
+
+        selectJob(job) {
+          this.selectedJob = job;
+          this.renderJobs(); // Re-render to update selection
+          this.renderJobDetail();
+        }
+
+        hoverJob(job) {
+          // Update preview on hover without changing selection
+          this.hoveredJob = job;
+          this.renderJobDetail();
+        }
+
+        async renderJobDetail() {
+          const container = document.getElementById("jobDetail");
+          const job = this.hoveredJob || this.selectedJob;
+
+          if (!job) {
+            container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">▦</div>
+                            <h3>Select a job to view details</h3>
+                            <p>Choose a job from the list to see its status, preview, and attributes</p>
+                        </div>
+                    `;
+            return;
+          }
+
+          try {
+            const response = await fetch(`/preview/${job.id}`);
+            const previewData = await response.json();
+
+            const html = `
+                        <div class="job-detail-header">
+                            <div class="job-title">Job #${job.id}</div>
+                            <div class="job-meta">Attributes for job ${
+                              job.id
+                            }</div>
+                        </div>
+
+                        <div class="job-detail-content">
+                            <div class="preview-section">
+                                <div class="preview-image" id="previewImage-${
+                                  job.id
+                                }">
+                                    <div class="no-preview">Loading preview...</div>
+                                </div>
+                                <div class="image-url-link">
+                                    <a href="${
+                                      previewData.image_url
+                                    }" target="_blank" class="url-link">
+                                        🔗 ${previewData.image_url}
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="traits-section">
+                                <div class="traits-title">Job Traits</div>
+                                <div class="trait-item">
+                                    <div class="trait-label">Scene</div>
+                                    <div class="trait-value">${
+                                      previewData.traits?.scene ||
+                                      "Default Scene"
+                                    }</div>
+                                </div>
+                                <div class="trait-item">
+                                    <div class="trait-label">Resolution</div>
+                                    <div class="trait-value">${
+                                      previewData.traits?.resolution ||
+                                      "1920x1080"
+                                    }</div>
+                                </div>
+                                <div class="trait-item">
+                                    <div class="trait-label">Frame Rate</div>
+                                    <div class="trait-value">${
+                                      previewData.traits?.frame_rate || "30"
+                                    }</div>
+                                </div>
+                                <div class="trait-item">
+                                    <div class="trait-label">Style</div>
+                                    <div class="trait-value">${
+                                      previewData.traits?.style || "Realistic"
+                                    }</div>
+                                </div>
+                                <div class="trait-item">
+                                    <div class="trait-label">Lighting</div>
+                                    <div class="trait-value">${
+                                      previewData.traits?.lighting || "Standard"
+                                    }</div>
+                                </div>
+                                <div class="trait-item">
+                                    <div class="trait-label">Camera Angle</div>
+                                    <div class="trait-value">${
+                                      previewData.traits?.camera_angle ||
+                                      "Eye Level"
+                                    }</div>
+                                </div>
+                                <div class="trait-item">
+                                    <div class="trait-label">Status</div>
+                                    <div class="trait-value">
+                                        <span class="job-status ${
+                                          job.status
+                                        }">${this.getStatusIcon(job.status)} ${
+              job.status.charAt(0).toUpperCase() + job.status.slice(1)
+            }</span>
+                                    </div>
+                                </div>
+                                ${
+                                  job.worker_url
+                                    ? `
+                                <div class="trait-item">
+                                    <div class="trait-label">Worker</div>
+                                    <div class="trait-value">
+                                        <a href="${job.worker_url}" target="_blank" class="worker-link-detail">→ ${job.worker_url}</a>
+                                    </div>
+                                </div>
+                                `
+                                    : ""
+                                }
+                                <div class="trait-item">
+                                    <div class="trait-label">Updated</div>
+                                    <div class="trait-value">${new Date(
+                                      job.updated_at
+                                    ).toLocaleString()}</div>
+                                </div>
+                                <div class="trait-item">
+                                    <div class="trait-label">Star</div>
+                                    <div class="trait-value">
+                                        <button class="star-toggle ${
+                                          job.starred ? "starred" : ""
+                                        }" 
+                                                onclick="renderFlow.toggleJobStar(${
+                                                  job.id
+                                                })"
+                                                title="${
+                                                  job.starred
+                                                    ? "Remove star"
+                                                    : "Star this job"
+                                                }">
+                                            ${
+                                              job.starred
+                                                ? "⭐ Starred"
+                                                : "☆ Star"
+                                            }
+                                        </button>
+                                    </div>
+                                </div>
+                                ${
+                                  job.status === "done" ||
+                                  job.status === "flagged"
+                                    ? `
+                                <div class="trait-item flagged-toggle-row">
+                                    <div class="trait-label">Flag</div>
+                                    <div class="trait-value">
+                                        <button class="flagged-toggle ${
+                                          job.status === "flagged"
+                                            ? "flagged"
+                                            : ""
+                                        }" 
+                                                onclick="renderFlow.toggleJobFlag(${
+                                                  job.id
+                                                }, '${job.status}')"
+                                                title="${
+                                                  job.status === "flagged"
+                                                    ? "Remove flag"
+                                                    : "Flag this job"
+                                                }">
+                                            ${
+                                              job.status === "flagged"
+                                                ? "⚠ Flagged"
+                                                : "🏷 Flag"
+                                            }
+                                        </button>
+                                    </div>
+                                </div>
+                                `
+                                    : ""
+                                }
+                            </div>
+                        </div>
+                    `;
+
+            container.innerHTML = html;
+
+            // Load preview image
+            this.loadPreviewImage(job.id, previewData.image_url);
+          } catch (error) {
+            console.error("Failed to load job details:", error);
+          }
+        }
+
+        loadPreviewImage(jobId, imageUrl) {
+          const previewElement = document.getElementById(
+            `previewImage-${jobId}`
+          );
+
+          const img = new Image();
+          img.onload = () => {
+            previewElement.innerHTML = `<img src="${imageUrl}" alt="Job ${jobId}">`;
+          };
+          img.onerror = () => {
+            previewElement.innerHTML =
+              '<div class="no-preview">No preview available</div>';
+          };
+          img.src = imageUrl;
+        }
+
+        async toggleJobFlag(jobId, currentStatus) {
+          try {
+            const newStatus = currentStatus === "flagged" ? "done" : "flagged";
+            const response = await fetch(`/job/${jobId}/status`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ status: newStatus }),
+            });
+
+            if (response.ok) {
+              // Update the job in our local array
+              const job = this.jobs.find((j) => j.id === jobId);
+              if (job) {
+                job.status = newStatus;
+              }
+
+              // Update hoveredJob and selectedJob if they're the same job
+              if (this.hoveredJob && this.hoveredJob.id === jobId) {
+                this.hoveredJob.status = newStatus;
+              }
+              if (this.selectedJob && this.selectedJob.id === jobId) {
+                this.selectedJob.status = newStatus;
+              }
+
+              // Re-render the job details to update the button
+              this.renderJobDetail();
+              // Re-render the jobs list to update the status
+              this.renderJobs();
+              // Update the flagged popup if it's open
+              this.updateFlaggedPopup();
+            } else {
+              console.error("Failed to toggle job flag");
+            }
+          } catch (error) {
+            console.error("Error toggling job flag:", error);
+          }
+        }
+
+        async toggleJobStar(jobId) {
+          try {
+            const response = await fetch(`/job/${jobId}/star`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
+
+            if (response.ok) {
+              // Update the job in our local array
+              const job = this.jobs.find((j) => j.id === jobId);
+              if (job) {
+                job.starred = !job.starred;
+              }
+
+              // Update hoveredJob and selectedJob if they're the same job
+              if (this.hoveredJob && this.hoveredJob.id === jobId) {
+                this.hoveredJob.starred = !this.hoveredJob.starred;
+              }
+              if (this.selectedJob && this.selectedJob.id === jobId) {
+                this.selectedJob.starred = !this.selectedJob.starred;
+              }
+
+              // Re-render the job details to update the button
+              this.renderJobDetail();
+              // Re-render the jobs list if starred filter is active
+              this.renderJobs();
+            } else {
+              console.error("Failed to toggle job star");
+            }
+          } catch (error) {
+            console.error("Error toggling job star:", error);
+          }
+        }
+
+        toggleStarredFilter(event) {
+          event.stopPropagation();
+          this.starredFilter = !this.starredFilter;
+          
+          const btn = document.querySelector('.starred-filter-btn');
+          if (this.starredFilter) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+          
+          this.renderJobs(); // Re-render with new filter
+        }
+
+        toggleFlaggedPopup(event) {
+          event.stopPropagation();
+          this.updateFlaggedPopup();
+          this.showFlaggedPopup();
+        }
+
+        showFlaggedPopup() {
+          const popup = document.getElementById("flaggedPopup");
+          const overlay = document.getElementById("flaggedPopupOverlay");
+          popup.style.display = "block";
+          overlay.style.display = "block";
+        }
+
+        closeFlaggedPopup() {
+          const popup = document.getElementById("flaggedPopup");
+          const overlay = document.getElementById("flaggedPopupOverlay");
+          popup.style.display = "none";
+          overlay.style.display = "none";
+        }
+
+        updateFlaggedPopup() {
+          const textarea = document.getElementById("flaggedPopupTextarea");
+          const flaggedJobs = this.jobs.filter(
+            (job) => job.status === "flagged"
+          );
+
+          if (flaggedJobs.length === 0) {
+            textarea.value = "";
+            textarea.placeholder = "No flagged jobs";
+          } else {
+            const jobIds = flaggedJobs.map((job) => job.id).join(", ");
+            textarea.value = jobIds;
+            textarea.placeholder = "";
+          }
+        }
+      }
+
+      // Initialize RenderFlow
+      const renderFlow = new RenderFlow();
+    </script>
+  </body>
+</html>
