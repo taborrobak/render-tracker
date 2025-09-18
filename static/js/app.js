@@ -805,6 +805,199 @@ class RenderFlow {
             }
           }
         }
+
+        // Mass flag functionality
+        toggleMassFlagPopup(event) {
+          event.stopPropagation();
+          this.showMassFlagPopup();
+        }
+
+        showMassFlagPopup() {
+          const popup = document.getElementById("massFlagPopup");
+          const overlay = document.getElementById("massFlagPopupOverlay");
+          const input = document.getElementById("massFlagInput");
+          
+          if (overlay) {
+            overlay.style.display = "block";
+          }
+          
+          if (popup) {
+            popup.style.display = "block";
+          }
+          
+          // Clear input and focus
+          if (input) {
+            input.value = "";
+            setTimeout(() => input.focus(), 100);
+          }
+        }
+
+        closeMassFlagPopup() {
+          const popup = document.getElementById("massFlagPopup");
+          const overlay = document.getElementById("massFlagPopupOverlay");
+          popup.style.display = "none";
+          overlay.style.display = "none";
+        }
+
+        async submitMassFlag() {
+          const input = document.getElementById("massFlagInput");
+          const submitBtn = document.getElementById("massFlagSubmitBtn");
+          const inputValue = input.value.trim();
+
+          if (!inputValue) {
+            alert("Please enter job numbers");
+            return;
+          }
+
+          // Parse job numbers from input (e.g., "1, 2, 3, 4")
+          const jobNumbers = inputValue
+            .split(",")
+            .map(num => num.trim())
+            .filter(num => num !== "")
+            .map(num => parseInt(num))
+            .filter(num => !isNaN(num));
+
+          if (jobNumbers.length === 0) {
+            alert("Please enter valid job numbers");
+            return;
+          }
+
+          // Disable submit button
+          submitBtn.disabled = true;
+          submitBtn.textContent = "🏁 Flagging...";
+
+          try {
+            let successCount = 0;
+            let errorCount = 0;
+            const errors = [];
+
+            // Flag each job individually
+            for (const jobId of jobNumbers) {
+              try {
+                const response = await fetch(`/job/${jobId}/status`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ status: "flagged" })
+                });
+
+                if (response.ok) {
+                  console.log(`✅ Job ${jobId} flagged successfully`);
+                  successCount++;
+                } else {
+                  console.error(`❌ Failed to flag job ${jobId}:`, response.statusText);
+                  errorCount++;
+                  errors.push(`Job ${jobId}: ${response.statusText}`);
+                }
+              } catch (error) {
+                console.error(`❌ Error flagging job ${jobId}:`, error);
+                errorCount++;
+                errors.push(`Job ${jobId}: ${error.message}`);
+              }
+            }
+
+            // Show results
+            let message = `Flagged ${successCount} job(s) successfully`;
+            if (errorCount > 0) {
+              message += `\n${errorCount} job(s) failed to flag`;
+              if (errors.length > 0) {
+                message += `:\n${errors.slice(0, 5).join('\n')}`;
+                if (errors.length > 5) {
+                  message += `\n... and ${errors.length - 5} more`;
+                }
+              }
+            }
+            
+            alert(message);
+
+            // Refresh job list to show updated statuses
+            await this.loadJobs();
+            
+            // Close popup
+            this.closeMassFlagPopup();
+
+          } catch (error) {
+            console.error("Error in mass flagging:", error);
+            alert(`Error: ${error.message}`);
+          } finally {
+            // Re-enable submit button
+            submitBtn.disabled = false;
+            submitBtn.textContent = "🏁 Flag Jobs";
+          }
+        }
+
+        // Reset all functionality
+        toggleResetAllPopup(event) {
+          event.stopPropagation();
+          this.showResetAllPopup();
+        }
+
+        showResetAllPopup() {
+          const popup = document.getElementById("resetAllPopup");
+          const overlay = document.getElementById("resetAllPopupOverlay");
+          const input = document.getElementById("resetAllInput");
+          
+          popup.style.display = "block";
+          overlay.style.display = "block";
+          
+          // Clear input and focus
+          input.value = "";
+          setTimeout(() => input.focus(), 100);
+        }
+
+        closeResetAllPopup() {
+          const popup = document.getElementById("resetAllPopup");
+          const overlay = document.getElementById("resetAllPopupOverlay");
+          popup.style.display = "none";
+          overlay.style.display = "none";
+        }
+
+        async submitResetAll() {
+          const input = document.getElementById("resetAllInput");
+          const submitBtn = document.getElementById("resetAllSubmitBtn");
+          const inputValue = input.value.trim().toLowerCase();
+
+          if (inputValue !== "yes") {
+            alert("Please type 'yes' to confirm resetting all jobs");
+            return;
+          }
+
+          // Disable submit button
+          submitBtn.disabled = true;
+          submitBtn.textContent = "🔄 Resetting...";
+
+          try {
+            const response = await fetch("/jobs/reset-all", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              }
+            });
+
+            if (response.ok) {
+              const result = await response.json();
+              alert(`Successfully reset ${result.reset_count} jobs to inactive status`);
+              
+              // Refresh job list to show updated statuses
+              await this.loadJobs();
+              
+              // Close popup
+              this.closeResetAllPopup();
+            } else {
+              const error = await response.text();
+              throw new Error(error);
+            }
+
+          } catch (error) {
+            console.error("Error resetting all jobs:", error);
+            alert(`Error: ${error.message}`);
+          } finally {
+            // Re-enable submit button
+            submitBtn.disabled = false;
+            submitBtn.textContent = "🔄 Reset All Jobs";
+          }
+        }
       }
 
       const renderFlow = new RenderFlow();
