@@ -77,6 +77,20 @@
               >
                 ℹ
               </div>
+              <div
+                class="mass-flag-icon"
+                onclick="renderFlow.toggleMassFlagPopup(event)"
+                title="Mass flag jobs"
+              >
+                🏁
+              </div>
+              <div
+                class="reset-all-icon"
+                onclick="renderFlow.toggleResetAllPopup(event)"
+                title="Reset all jobs to inactive"
+              >
+                🔄
+              </div>
             </div>
           </div>
         </div>
@@ -204,6 +218,99 @@
           title="Reset all flagged jobs to pending status"
         >
           🔄 Reset All Flagged Jobs
+        </button>
+      </div>
+    </div>
+
+    <!-- Mass flag jobs popup overlay and modal -->
+    <div
+      class="mass-flag-popup-overlay"
+      id="massFlagPopupOverlay"
+      onclick="renderFlow.closeMassFlagPopup()"
+    ></div>
+    <div class="mass-flag-popup" id="massFlagPopup">
+      <div class="mass-flag-popup-header">
+        <h3 class="mass-flag-popup-title">Mass Flag Jobs</h3>
+        <button
+          class="mass-flag-popup-close"
+          onclick="renderFlow.closeMassFlagPopup()"
+          title="Close"
+        >
+          ×
+        </button>
+      </div>
+      <div class="mass-flag-popup-body">
+        <div class="mass-flag-instructions">
+          Enter job numbers separated by commas (e.g., 1, 2, 3, 4)
+        </div>
+        <textarea
+          class="mass-flag-input"
+          id="massFlagInput"
+          placeholder="1, 2, 3, 4..."
+          rows="4"
+        ></textarea>
+      </div>
+      <div class="mass-flag-popup-footer">
+        <button
+          class="mass-flag-cancel-btn"
+          onclick="renderFlow.closeMassFlagPopup()"
+        >
+          Cancel
+        </button>
+        <button
+          class="mass-flag-submit-btn"
+          id="massFlagSubmitBtn"
+          onclick="renderFlow.submitMassFlag()"
+        >
+          🏁 Flag Jobs
+        </button>
+      </div>
+    </div>
+
+    <!-- Reset all jobs popup overlay and modal -->
+    <div
+      class="reset-all-popup-overlay"
+      id="resetAllPopupOverlay"
+      onclick="renderFlow.closeResetAllPopup()"
+    ></div>
+    <div class="reset-all-popup" id="resetAllPopup">
+      <div class="reset-all-popup-header">
+        <h3 class="reset-all-popup-title">Reset All Jobs</h3>
+        <button
+          class="reset-all-popup-close"
+          onclick="renderFlow.closeResetAllPopup()"
+          title="Close"
+        >
+          ×
+        </button>
+      </div>
+      <div class="reset-all-popup-body">
+        <div class="reset-all-warning">
+          ⚠️ This will reset ALL jobs to inactive status!
+        </div>
+        <div class="reset-all-instructions">
+          Type "yes" to confirm this action:
+        </div>
+        <input
+          type="text"
+          class="reset-all-input"
+          id="resetAllInput"
+          placeholder="Type 'yes' to confirm"
+        />
+      </div>
+      <div class="reset-all-popup-footer">
+        <button
+          class="reset-all-cancel-btn"
+          onclick="renderFlow.closeResetAllPopup()"
+        >
+          Cancel
+        </button>
+        <button
+          class="reset-all-submit-btn"
+          id="resetAllSubmitBtn"
+          onclick="renderFlow.submitResetAll()"
+        >
+          🔄 Reset All Jobs
         </button>
       </div>
     </div>
