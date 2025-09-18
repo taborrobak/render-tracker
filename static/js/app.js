@@ -10,6 +10,131 @@ class RenderFlow {
           this.selectedJob = null;
           this.hoveredJob = null;
 
+          // Check authentication status first
+          this.initAuthentication();
+        }
+
+        initAuthentication() {
+          // Check if user is already authenticated
+          const isAuthenticated = localStorage.getItem('renderflow_auth') === 'true';
+          
+          if (isAuthenticated) {
+            this.hideAuthOverlay();
+            this.initializeApp();
+          } else {
+            this.showAuthOverlay();
+          }
+        }
+
+        showAuthOverlay() {
+          document.body.classList.add('auth-active');
+          const overlay = document.getElementById('authOverlay');
+          overlay.classList.remove('hidden');
+          
+          // Focus on password input
+          const passwordInput = document.getElementById('authPassword');
+          setTimeout(() => passwordInput.focus(), 100);
+          
+          // Add enter key listener
+          passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+              this.authenticate();
+            }
+          });
+
+          // Disable right-click context menu
+          document.addEventListener('contextmenu', this.preventContextMenu);
+        }
+
+        hideAuthOverlay() {
+          document.body.classList.remove('auth-active');
+          const overlay = document.getElementById('authOverlay');
+          overlay.classList.add('hidden');
+          
+          // Re-enable right-click context menu
+          document.removeEventListener('contextmenu', this.preventContextMenu);
+        }
+
+        preventContextMenu(e) {
+          e.preventDefault();
+          return false;
+        }
+
+        authenticate() {
+          const passwordInput = document.getElementById('authPassword');
+          const password = passwordInput.value.trim();
+          
+          if (!password) {
+            this.showAuthError('Please enter an access code.');
+            return;
+          }
+          
+          // Show loading state
+          const submitBtn = document.getElementById('authSubmit');
+          const originalText = submitBtn.textContent;
+          submitBtn.textContent = 'Authenticating...';
+          submitBtn.disabled = true;
+          
+          // Send password to server for validation
+          fetch('/auth', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ password: password })
+          })
+          .then(response => {
+            if (response.ok) {
+              return response.json();
+            } else {
+              throw new Error('Invalid access code');
+            }
+          })
+          .then(data => {
+            if (data.authenticated) {
+              // Store authentication in localStorage
+              localStorage.setItem('renderflow_auth', 'true');
+              this.hideAuthOverlay();
+              this.initializeApp();
+            } else {
+              throw new Error('Authentication failed');
+            }
+          })
+          .catch(error => {
+            this.showAuthError('Invalid access code. Please try again.');
+            passwordInput.value = '';
+            passwordInput.focus();
+          })
+          .finally(() => {
+            // Reset button state
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+          });
+        }
+
+        showAuthError(message) {
+          // Remove existing error if any
+          const existingError = document.querySelector('.auth-error');
+          if (existingError) {
+            existingError.remove();
+          }
+          
+          // Create new error element
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'auth-error show';
+          errorDiv.textContent = message;
+          
+          const authForm = document.querySelector('.auth-form');
+          authForm.appendChild(errorDiv);
+          
+          // Hide error after 3 seconds
+          setTimeout(() => {
+            errorDiv.classList.remove('show');
+            setTimeout(() => errorDiv.remove(), 200);
+          }, 3000);
+        }
+
+        initializeApp() {
           this.initWebSocket();
           this.initEventListeners();
           this.loadJobs();
@@ -56,9 +181,9 @@ class RenderFlow {
         }
 
         updateElapsedTimes() {
-          // Update elapsed times for all rendering jobs without full re-render
+          // Update elapsed times for all working jobs without full re-render
           this.jobs.forEach((job) => {
-            if (job.status === "rendering" && job.elapsed_time !== null) {
+            if (job.status === "working" && job.elapsed_time !== null) {
               job.elapsed_time += 1;
               // Update the DOM element
               const jobElement = document.querySelector(
@@ -66,13 +191,13 @@ class RenderFlow {
               );
               if (jobElement) {
                 const timeStr = this.formatElapsedTime(job.elapsed_time);
-                const statusIcon = this.getStatusIcon("rendering");
+                const statusIcon = this.getStatusIcon("working");
                 const workerLink = job.worker_url
                   ? `<a href="${job.worker_url}" target="_blank" class="worker-link" title="Open worker UI">▶</a>`
                   : "";
 
                 jobElement.innerHTML = `
-                  <div class="working-content">${statusIcon} Rendering</div>
+                  <div class="working-content">${statusIcon} Working</div>
                   <div class="working-right">
                     <span class="elapsed-time">${timeStr}</span>
                     ${workerLink}
@@ -316,10 +441,10 @@ class RenderFlow {
               // Get status icon
               const statusIcon = this.getStatusIcon(job.status);
 
-              // Format status display with elapsed time and worker link for rendering jobs
+              // Format status display with elapsed time and worker link for working jobs
               let statusDisplay =
                 job.status.charAt(0).toUpperCase() + job.status.slice(1);
-              if (job.status === "rendering") {
+              if (job.status === "working") {
                 const timeStr =
                   job.elapsed_time !== null
                     ? this.formatElapsedTime(job.elapsed_time)
@@ -329,7 +454,7 @@ class RenderFlow {
                   : "";
 
                 statusDisplay = `
-                  <div class="working-content">${statusIcon} Rendering</div>
+                  <div class="working-content">${statusIcon} Working</div>
                   <div class="working-right">
                     ${
                       timeStr
@@ -434,6 +559,21 @@ class RenderFlow {
             const response = await fetch(`/preview/${job.id}`);
             const previewData = await response.json();
 
+            // Dynamically generate trait items based on available data
+            let traitsHtml = '';
+            if (previewData.traits && typeof previewData.traits === 'object') {
+                for (const [key, value] of Object.entries(previewData.traits)) {
+                    // Format the key for display (capitalize first letter, replace underscores with spaces)
+                    const displayKey = key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
+                    traitsHtml += `
+                        <div class="trait-item">
+                            <div class="trait-label">${displayKey}</div>
+                            <div class="trait-value">${value || 'N/A'}</div>
+                        </div>
+                    `;
+                }
+            }
+
             const html = `
                         <div class="job-detail-header">
                             <div class="job-title">Job #${job.id}</div>
@@ -445,45 +585,7 @@ class RenderFlow {
                         <div class="job-detail-content">
                             <div class="traits-section">
                                 <div class="traits-title">Job Traits</div>
-                                <div class="trait-item">
-                                    <div class="trait-label">Scene</div>
-                                    <div class="trait-value">${
-                                      previewData.traits?.scene ||
-                                      "Default Scene"
-                                    }</div>
-                                </div>
-                                <div class="trait-item">
-                                    <div class="trait-label">Resolution</div>
-                                    <div class="trait-value">${
-                                      previewData.traits?.resolution ||
-                                      "1920x1080"
-                                    }</div>
-                                </div>
-                                <div class="trait-item">
-                                    <div class="trait-label">Frame Rate</div>
-                                    <div class="trait-value">${
-                                      previewData.traits?.frame_rate || "30"
-                                    }</div>
-                                </div>
-                                <div class="trait-item">
-                                    <div class="trait-label">Style</div>
-                                    <div class="trait-value">${
-                                      previewData.traits?.style || "Realistic"
-                                    }</div>
-                                </div>
-                                <div class="trait-item">
-                                    <div class="trait-label">Lighting</div>
-                                    <div class="trait-value">${
-                                      previewData.traits?.lighting || "Standard"
-                                    }</div>
-                                </div>
-                                <div class="trait-item">
-                                    <div class="trait-label">Camera Angle</div>
-                                    <div class="trait-value">${
-                                      previewData.traits?.camera_angle ||
-                                      "Eye Level"
-                                    }</div>
-                                </div>
+                                ${traitsHtml}
                                 <div class="trait-item">
                                     <div class="trait-label">Status</div>
                                     <div class="trait-value">
@@ -827,6 +929,205 @@ class RenderFlow {
               resetButton.textContent = `🔄 Reset All Flagged Jobs (${flaggedJobs.length})`;
             }
           }
+        }
+
+        // Mass flag functionality
+        toggleMassFlagPopup(event) {
+          event.stopPropagation();
+          this.showMassFlagPopup();
+        }
+
+        showMassFlagPopup() {
+          const popup = document.getElementById("massFlagPopup");
+          const overlay = document.getElementById("massFlagPopupOverlay");
+          const input = document.getElementById("massFlagInput");
+          
+          if (overlay) {
+            overlay.style.display = "block";
+          }
+          
+          if (popup) {
+            popup.style.display = "block";
+          }
+          
+          // Clear input and focus
+          if (input) {
+            input.value = "";
+            setTimeout(() => input.focus(), 100);
+          }
+        }
+
+        closeMassFlagPopup() {
+          const popup = document.getElementById("massFlagPopup");
+          const overlay = document.getElementById("massFlagPopupOverlay");
+          popup.style.display = "none";
+          overlay.style.display = "none";
+        }
+
+        async submitMassFlag() {
+          const input = document.getElementById("massFlagInput");
+          const submitBtn = document.getElementById("massFlagSubmitBtn");
+          const inputValue = input.value.trim();
+
+          if (!inputValue) {
+            alert("Please enter job numbers");
+            return;
+          }
+
+          // Parse job numbers from input (e.g., "1, 2, 3, 4")
+          const jobNumbers = inputValue
+            .split(",")
+            .map(num => num.trim())
+            .filter(num => num !== "")
+            .map(num => parseInt(num))
+            .filter(num => !isNaN(num));
+
+          if (jobNumbers.length === 0) {
+            alert("Please enter valid job numbers");
+            return;
+          }
+
+          // Disable submit button
+          submitBtn.disabled = true;
+          submitBtn.textContent = "🏁 Flagging...";
+
+          try {
+            let successCount = 0;
+            let errorCount = 0;
+            const errors = [];
+
+            // Flag each job individually
+            for (const jobId of jobNumbers) {
+              try {
+                const response = await fetch(`/job/${jobId}/status`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ status: "flagged" })
+                });
+
+                if (response.ok) {
+                  console.log(`✅ Job ${jobId} flagged successfully`);
+                  successCount++;
+                } else {
+                  console.error(`❌ Failed to flag job ${jobId}:`, response.statusText);
+                  errorCount++;
+                  errors.push(`Job ${jobId}: ${response.statusText}`);
+                }
+              } catch (error) {
+                console.error(`❌ Error flagging job ${jobId}:`, error);
+                errorCount++;
+                errors.push(`Job ${jobId}: ${error.message}`);
+              }
+            }
+
+            // Show results
+            let message = `Flagged ${successCount} job(s) successfully`;
+            if (errorCount > 0) {
+              message += `\n${errorCount} job(s) failed to flag`;
+              if (errors.length > 0) {
+                message += `:\n${errors.slice(0, 5).join('\n')}`;
+                if (errors.length > 5) {
+                  message += `\n... and ${errors.length - 5} more`;
+                }
+              }
+            }
+            
+            alert(message);
+
+            // Refresh job list to show updated statuses
+            await this.loadJobs();
+            
+            // Close popup
+            this.closeMassFlagPopup();
+
+          } catch (error) {
+            console.error("Error in mass flagging:", error);
+            alert(`Error: ${error.message}`);
+          } finally {
+            // Re-enable submit button
+            submitBtn.disabled = false;
+            submitBtn.textContent = "🏁 Flag Jobs";
+          }
+        }
+
+        // Reset all functionality
+        toggleResetAllPopup(event) {
+          event.stopPropagation();
+          this.showResetAllPopup();
+        }
+
+        showResetAllPopup() {
+          const popup = document.getElementById("resetAllPopup");
+          const overlay = document.getElementById("resetAllPopupOverlay");
+          const input = document.getElementById("resetAllInput");
+          
+          popup.style.display = "block";
+          overlay.style.display = "block";
+          
+          // Clear input and focus
+          input.value = "";
+          setTimeout(() => input.focus(), 100);
+        }
+
+        closeResetAllPopup() {
+          const popup = document.getElementById("resetAllPopup");
+          const overlay = document.getElementById("resetAllPopupOverlay");
+          popup.style.display = "none";
+          overlay.style.display = "none";
+        }
+
+        async submitResetAll() {
+          const input = document.getElementById("resetAllInput");
+          const submitBtn = document.getElementById("resetAllSubmitBtn");
+          const inputValue = input.value.trim().toLowerCase();
+
+          if (inputValue !== "yes") {
+            alert("Please type 'yes' to confirm resetting all jobs");
+            return;
+          }
+
+          // Disable submit button
+          submitBtn.disabled = true;
+          submitBtn.textContent = "🔄 Resetting...";
+
+          try {
+            const response = await fetch("/jobs/reset-all", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              }
+            });
+
+            if (response.ok) {
+              const result = await response.json();
+              alert(`Successfully reset ${result.reset_count} jobs to inactive status`);
+              
+              // Refresh job list to show updated statuses
+              await this.loadJobs();
+              
+              // Close popup
+              this.closeResetAllPopup();
+            } else {
+              const error = await response.text();
+              throw new Error(error);
+            }
+
+          } catch (error) {
+            console.error("Error resetting all jobs:", error);
+            alert(`Error: ${error.message}`);
+          } finally {
+            // Re-enable submit button
+            submitBtn.disabled = false;
+            submitBtn.textContent = "🔄 Reset All Jobs";
+          }
+        }
+
+        // Add logout functionality (can be called from browser console)
+        logout() {
+          localStorage.removeItem('renderflow_auth');
+          location.reload();
         }
       }
 

@@ -601,6 +601,46 @@
         color: var(--nord1);
       }
 
+      /* Mass flag icon */
+      .mass-flag-icon {
+        display: inline-block;
+        margin-left: 6px;
+        padding: 2px 6px;
+        background: var(--nord2);
+        border: 1px solid var(--nord3);
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 10px;
+        color: var(--nord12);
+        transition: all 0.2s ease;
+        vertical-align: middle;
+      }
+
+      .mass-flag-icon:hover {
+        background: var(--nord12);
+        color: var(--nord1);
+      }
+
+      /* Reset all icon */
+      .reset-all-icon {
+        display: inline-block;
+        margin-left: 6px;
+        padding: 2px 6px;
+        background: var(--nord2);
+        border: 1px solid var(--nord3);
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 10px;
+        color: var(--nord11);
+        transition: all 0.2s ease;
+        vertical-align: middle;
+      }
+
+      .reset-all-icon:hover {
+        background: var(--nord11);
+        color: var(--nord1);
+      }
+
       /* Flagged jobs popup */
       .flagged-popup {
         position: fixed;
@@ -738,6 +778,291 @@
         background: rgba(0, 0, 0, 0.5);
         z-index: 999;
         display: none;
+      }
+
+      /* Mass flag popup overlay */
+      .mass-flag-popup-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        display: none;
+      }
+
+      /* Mass flag popup */
+      .mass-flag-popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--nord1);
+        border: 1px solid var(--nord3);
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        padding: 0;
+        width: 400px;
+        max-width: 80vw;
+        z-index: 1000;
+        display: none;
+      }
+
+      .mass-flag-popup-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--nord3);
+      }
+
+      .mass-flag-popup-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--nord12);
+        margin: 0;
+      }
+
+      .mass-flag-popup-close {
+        background: none;
+        border: none;
+        color: var(--nord4);
+        font-size: 18px;
+        cursor: pointer;
+        padding: 4px;
+        line-height: 1;
+        transition: color 0.2s ease;
+      }
+
+      .mass-flag-popup-close:hover {
+        color: var(--nord12);
+      }
+
+      .mass-flag-popup-body {
+        padding: 20px;
+      }
+
+      .mass-flag-instructions {
+        font-size: 12px;
+        color: var(--nord4);
+        margin-bottom: 12px;
+      }
+
+      .mass-flag-input {
+        width: 100%;
+        min-height: 80px;
+        max-height: 200px;
+        background: var(--nord0);
+        border: 1px solid var(--nord2);
+        border-radius: 4px;
+        padding: 12px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        color: var(--nord6);
+        outline: none;
+        box-sizing: border-box;
+        resize: vertical;
+        overflow-y: auto;
+        line-height: 1.4;
+      }
+
+      .mass-flag-input:focus {
+        border-color: var(--nord12);
+      }
+
+      .mass-flag-popup-footer {
+        padding: 20px;
+        border-top: 1px solid var(--nord2);
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        background: var(--nord1);
+      }
+
+      .mass-flag-cancel-btn {
+        background: var(--nord3);
+        color: var(--nord6);
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .mass-flag-cancel-btn:hover {
+        background: var(--nord4);
+        color: var(--nord1);
+      }
+
+      .mass-flag-submit-btn {
+        background: var(--nord12);
+        color: var(--nord1);
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .mass-flag-submit-btn:hover {
+        background: var(--nord11);
+      }
+
+      .mass-flag-submit-btn:disabled {
+        background: var(--nord3);
+        color: var(--nord4);
+        cursor: not-allowed;
+      }
+
+      /* Reset all popup */
+      .reset-all-popup-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        display: none;
+      }
+
+      .reset-all-popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--nord1);
+        border: 1px solid var(--nord3);
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        padding: 0;
+        width: 400px;
+        max-width: 80vw;
+        z-index: 1000;
+        display: none;
+      }
+
+      .reset-all-popup-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--nord3);
+      }
+
+      .reset-all-popup-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--nord11);
+        margin: 0;
+      }
+
+      .reset-all-popup-close {
+        background: none;
+        border: none;
+        color: var(--nord4);
+        font-size: 18px;
+        cursor: pointer;
+        padding: 4px;
+        line-height: 1;
+        transition: color 0.2s ease;
+      }
+
+      .reset-all-popup-close:hover {
+        color: var(--nord11);
+      }
+
+      .reset-all-popup-body {
+        padding: 20px;
+      }
+
+      .reset-all-warning {
+        font-size: 13px;
+        color: var(--nord11);
+        margin-bottom: 12px;
+        font-weight: 600;
+      }
+
+      .reset-all-instructions {
+        font-size: 12px;
+        color: var(--nord4);
+        margin-bottom: 12px;
+      }
+
+      .reset-all-input {
+        width: 100%;
+        background: var(--nord0);
+        border: 1px solid var(--nord2);
+        border-radius: 4px;
+        padding: 12px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        color: var(--nord6);
+        outline: none;
+        box-sizing: border-box;
+      }
+
+      .reset-all-input:focus {
+        border-color: var(--nord11);
+      }
+
+      .reset-all-popup-footer {
+        padding: 20px;
+        border-top: 1px solid var(--nord2);
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        background: var(--nord1);
+      }
+
+      .reset-all-cancel-btn {
+        background: var(--nord3);
+        color: var(--nord6);
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .reset-all-cancel-btn:hover {
+        background: var(--nord4);
+        color: var(--nord1);
+      }
+
+      .reset-all-submit-btn {
+        background: var(--nord11);
+        color: var(--nord1);
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .reset-all-submit-btn:hover {
+        background: var(--nord12);
+      }
+
+      .reset-all-submit-btn:disabled {
+        background: var(--nord3);
+        color: var(--nord4);
+        cursor: not-allowed;
       }
 
       .worker-link-detail {
@@ -1073,4 +1398,136 @@
         color: var(--nord4);
         font-size: 14px;
       }
+
+      /* Authentication Overlay */
+      .auth-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: var(--nord6);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+      }
+
+      .auth-overlay.hidden {
+        display: none;
+      }
+
+      .auth-container {
+        background: white;
+        border-radius: 12px;
+        padding: 40px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        max-width: 400px;
+        width: 90%;
+        border: 1px solid #e0e0e0;
+      }
+
+      .auth-header {
+        margin-bottom: 30px;
+      }
+
+      .auth-logo {
+        font-size: 24px;
+        font-weight: 600;
+        color: var(--nord0);
+        margin-bottom: 8px;
+      }
+
+      .auth-subtitle {
+        font-size: 14px;
+        color: var(--nord3);
+        font-weight: 400;
+      }
+
+      .auth-form {
+        margin-bottom: 25px;
+      }
+
+      .auth-input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 16px;
+        font-family: var(--font-family);
+        margin-bottom: 16px;
+        background: #f8f9fa;
+        color: var(--nord0);
+        transition: all 0.2s ease;
+      }
+
+      .auth-input:focus {
+        outline: none;
+        border-color: var(--nord8);
+        background: white;
+        box-shadow: 0 0 0 3px rgba(136, 192, 208, 0.1);
+      }
+
+      .auth-button {
+        width: 100%;
+        padding: 12px 16px;
+        background: var(--nord8);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-family: var(--font-family);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .auth-button:hover {
+        background: var(--nord9);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(136, 192, 208, 0.3);
+      }
+
+      .auth-button:active {
+        transform: translateY(0);
+      }
+
+      .auth-footer {
+        font-size: 12px;
+        color: var(--nord3);
+        line-height: 1.5;
+      }
+
+      .auth-error {
+        color: var(--nord11);
+        font-size: 14px;
+        margin-top: 10px;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      }
+
+      .auth-error.show {
+        opacity: 1;
+      }
+
+      /* Disable right-click when auth overlay is active */
+      body.auth-active {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      body.auth-active * {
+        pointer-events: none;
+      }
+
+      body.auth-active .auth-overlay,
+      body.auth-active .auth-overlay * {
+        pointer-events: auto;
+      }
+    
     
