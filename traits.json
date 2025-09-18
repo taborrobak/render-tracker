@@ -1,34 +1,402 @@
 {
   "1": {
-    "scene": "Forest Path",
-    "resolution": "1920x1080",
-    "frame_rate": "30",
-    "style": "Photorealistic",
-    "lighting": "Golden Hour",
-    "camera_angle": "Wide Shot"
+    "prompt": "a man wearing a gray t-shirt, short hair, in a urban alley background",
+    "filename": "gray_tshirt_short_hair"
   },
   "2": {
-    "scene": "Urban Street",
-    "resolution": "1920x1080", 
-    "frame_rate": "24",
-    "style": "Cinematic",
-    "lighting": "Neon Night",
-    "camera_angle": "Low Angle"
+    "prompt": "a man wearing a blue hoodie, buzz cut, in a coffee shop background",
+    "filename": "blue_hoodie_buzz_cut"
   },
   "3": {
-    "scene": "Mountain Vista",
-    "resolution": "2560x1440",
-    "frame_rate": "60",
-    "style": "Fantasy",
-    "lighting": "Dramatic Sunset",
-    "camera_angle": "Aerial View"
+    "prompt": "a man wearing a red flannel, full beard, in a cabin background",
+    "filename": "red_flannel_full_beard"
   },
-  "1001": {
-    "scene": "Ancient Temple",
-    "resolution": "1920x1080",
-    "frame_rate": "30",
-    "style": "Mystical",
-    "lighting": "Soft Ambient",
-    "camera_angle": "Eye Level"
+  "4": {
+    "prompt": "a man wearing a black leather jacket, slicked back hair, in a garage background",
+    "filename": "black_leather_slicked"
+  },
+  "5": {
+    "prompt": "a man wearing a white dress shirt, clean shaven, in a office background",
+    "filename": "white_shirt_clean_shaven"
+  },
+  "6": {
+    "prompt": "a man wearing a green sweater, ponytail, in a park background",
+    "filename": "green_sweater_ponytail"
+  },
+  "7": {
+    "prompt": "a man wearing a brown jacket, goatee, in a bar background",
+    "filename": "brown_jacket_goatee"
+  },
+  "8": {
+    "prompt": "a man wearing a navy suit, side part, in a restaurant background",
+    "filename": "navy_suit_side_part"
+  },
+  "9": {
+    "prompt": "a man wearing a yellow t-shirt, curly hair, in a gym background",
+    "filename": "yellow_tshirt_curly"
+  },
+  "10": {
+    "prompt": "a man wearing a purple hoodie, man bun, in a library background",
+    "filename": "purple_hoodie_man_bun"
+  },
+  "11": {
+    "prompt": "a man wearing a denim jacket, stubble, in a workshop background",
+    "filename": "denim_jacket_stubble"
+  },
+  "12": {
+    "prompt": "a man wearing a pink polo, crew cut, in a beach background",
+    "filename": "pink_polo_crew_cut"
+  },
+  "13": {
+    "prompt": "a man wearing a orange tank top, mohawk, in a skate park background",
+    "filename": "orange_tank_mohawk"
+  },
+  "14": {
+    "prompt": "a man wearing a silver blazer, fade cut, in a casino background",
+    "filename": "silver_blazer_fade"
+  },
+  "15": {
+    "prompt": "a man wearing a khaki vest, mustache, in a camping background",
+    "filename": "khaki_vest_mustache"
+  },
+  "16": {
+    "prompt": "a man wearing a teal cardigan, long hair, in a art studio background",
+    "filename": "teal_cardigan_long_hair"
+  },
+  "17": {
+    "prompt": "a man wearing a black turtleneck, beard, in a jazz club background",
+    "filename": "black_turtleneck_beard"
+  },
+  "18": {
+    "prompt": "a man wearing a camo shirt, buzz cut, in a forest background",
+    "filename": "camo_shirt_buzz"
+  },
+  "19": {
+    "prompt": "a man wearing a violet sweater, top knot, in a bookstore background",
+    "filename": "violet_sweater_top_knot"
+  },
+  "20": {
+    "prompt": "a man wearing a gold shirt, cornrows, in a recording studio background",
+    "filename": "gold_shirt_cornrows"
+  },
+  "21": {
+    "prompt": "a man wearing a maroon polo, high fade, in a rooftop background",
+    "filename": "maroon_polo_high_fade"
+  },
+  "22": {
+    "prompt": "a man wearing a aqua hoodie, dreads, in a basketball court background",
+    "filename": "aqua_hoodie_dreads"
+  },
+  "23": {
+    "prompt": "a man wearing a burgundy blazer, handlebar mustache, in a speakeasy background",
+    "filename": "burgundy_blazer_handlebar"
+  },
+  "24": {
+    "prompt": "a man wearing a lime vest, soul patch, in a tech office background",
+    "filename": "lime_vest_soul_patch"
+  },
+  "25": {
+    "prompt": "a man wearing a rust sweater, viking braids, in a mountain lodge background",
+    "filename": "rust_sweater_viking_braids"
+  },
+  "26": {
+    "prompt": "a man wearing a cream colored sweater, top knot, in a zen garden background",
+    "filename": "cream_sweater_top_knot"
+  },
+  "27": {
+    "prompt": "a man wearing a coral polo shirt, crew cut, in a yacht deck background",
+    "filename": "coral_polo_crew_cut"
+  },
+  "28": {
+    "prompt": "a man wearing a forest green cardigan, long beard, in a bookstore background",
+    "filename": "forest_cardigan_long_beard"
+  },
+  "29": {
+    "prompt": "a man wearing a gold silk shirt, cornrows, in a jazz club background",
+    "filename": "gold_silk_cornrows"
+  },
+  "30": {
+    "prompt": "a man wearing a midnight blue tuxedo, slicked back, in a ballroom background",
+    "filename": "midnight_tux_slicked"
+  },
+  "31": {
+    "prompt": "a man wearing a salmon colored vest, mutton chops, in a vineyard background",
+    "filename": "salmon_vest_mutton_chops"
+  },
+  "32": {
+    "prompt": "a man wearing a olive military surplus, buzz cut, in a bunker background",
+    "filename": "olive_surplus_buzz"
+  },
+  "33": {
+    "prompt": "a man wearing a lavender dress shirt, quiff, in a flower shop background",
+    "filename": "lavender_shirt_quiff"
+  },
+  "34": {
+    "prompt": "a man wearing a rust colored jacket, viking braids, in a forge background",
+    "filename": "rust_jacket_viking_braids"
+  },
+  "35": {
+    "prompt": "a man wearing a pearl white blazer, fade cut, in a yacht club background",
+    "filename": "pearl_blazer_fade"
+  },
+  "36": {
+    "prompt": "a man wearing a emerald green hoodie, man bun undercut, in a gaming arcade background",
+    "filename": "emerald_hoodie_undercut"
+  },
+  "37": {
+    "prompt": "a man wearing a copper metallic shirt, soul patch, in a recording studio background",
+    "filename": "copper_shirt_soul_patch"
+  },
+  "38": {
+    "prompt": "a man wearing a royal purple robe, long flowing hair, in a throne room background",
+    "filename": "purple_robe_flowing_hair"
+  },
+  "39": {
+    "prompt": "a man wearing a crimson leather jacket, rockabilly hair, in a garage band background",
+    "filename": "crimson_leather_rockabilly"
+  },
+  "40": {
+    "prompt": "a man wearing a sage green utility vest, tactical haircut, in a survival camp background",
+    "filename": "sage_utility_tactical"
+  },
+  "41": {
+    "prompt": "a man wearing a turquoise silk shirt, ponytail, in a art studio background",
+    "filename": "turquoise_silk_ponytail"
+  },
+  "42": {
+    "prompt": "a man wearing a chocolate brown sweater, full beard, in a cabin fireplace background",
+    "filename": "chocolate_sweater_full_beard"
+  },
+  "43": {
+    "prompt": "a man wearing a electric blue jacket, faux hawk, in a tech startup background",
+    "filename": "electric_blue_faux_hawk"
+  },
+  "44": {
+    "prompt": "a man wearing a burgundy velvet blazer, handlebar mustache, in a speakeasy background",
+    "filename": "burgundy_velvet_handlebar"
+  },
+  "45": {
+    "prompt": "a man wearing a slate gray hoodie, buzz cut fade, in a urban rooftop background",
+    "filename": "slate_hoodie_buzz_fade"
+  },
+  "46": {
+    "prompt": "a man wearing a mustard yellow cardigan, hipster beard, in a coffee roastery background",
+    "filename": "mustard_cardigan_hipster_beard"
+  },
+  "47": {
+    "prompt": "a man wearing a deep red flannel, lumberjack beard, in a log cabin background",
+    "filename": "deep_red_flannel_lumberjack"
+  },
+  "48": {
+    "prompt": "a man wearing a ice blue dress shirt, caesar cut, in a corporate boardroom background",
+    "filename": "ice_blue_shirt_caesar"
+  },
+  "49": {
+    "prompt": "a man wearing a charcoal leather vest, goatee, in a motorcycle shop background",
+    "filename": "charcoal_leather_goatee"
+  },
+  "50": {
+    "prompt": "a man wearing a peach colored polo, crew cut, in a country club background",
+    "filename": "peach_polo_crew"
+  },
+  "51": {
+    "prompt": "a man wearing a hunter green jacket, full mustache, in a hunting lodge background",
+    "filename": "hunter_green_full_mustache"
+  },
+  "52": {
+    "prompt": "a man wearing a rose gold shirt, top knot fade, in a luxury hotel background",
+    "filename": "rose_gold_top_knot"
+  },
+  "53": {
+    "prompt": "a man wearing a navy pinstripe suit, side part, in a law office background",
+    "filename": "navy_pinstripe_side_part"
+  },
+  "54": {
+    "prompt": "a man wearing a burnt orange hoodie, dreads, in a basketball court background",
+    "filename": "burnt_orange_dreads"
+  },
+  "55": {
+    "prompt": "a man wearing a forest camo vest, military buzz, in a training facility background",
+    "filename": "forest_camo_military_buzz"
+  },
+  "56": {
+    "prompt": "a man wearing a ivory silk shirt, slicked pompadour, in a opera house background",
+    "filename": "ivory_silk_pompadour"
+  },
+  "57": {
+    "prompt": "a man wearing a cobalt blue blazer, textured quiff, in a fashion runway background",
+    "filename": "cobalt_blazer_textured_quiff"
+  },
+  "58": {
+    "prompt": "a man wearing a mahogany leather jacket, full beard braid, in a biker bar background",
+    "filename": "mahogany_leather_beard_braid"
+  },
+  "59": {
+    "prompt": "a man wearing a mint green cardigan, clean shaven, in a botanical garden background",
+    "filename": "mint_cardigan_clean_shaven"
+  },
+  "60": {
+    "prompt": "a man wearing a crimson velvet jacket, curly afro, in a jazz lounge background",
+    "filename": "crimson_velvet_curly_afro"
+  },
+  "61": {
+    "prompt": "a man wearing a steel gray utility shirt, high and tight, in a workshop background",
+    "filename": "steel_utility_high_tight"
+  },
+  "62": {
+    "prompt": "a man wearing a golden yellow blazer, wavy pompadour, in a casino floor background",
+    "filename": "golden_blazer_wavy_pompadour"
+  },
+  "63": {
+    "prompt": "a man wearing a deep purple hoodie, man bun, in a music festival background",
+    "filename": "deep_purple_man_bun"
+  },
+  "64": {
+    "prompt": "a man wearing a bronze metallic vest, soul patch, in a steampunk laboratory background",
+    "filename": "bronze_vest_soul_patch"
+  },
+  "65": {
+    "prompt": "a man wearing a lime green tank top, mohawk fade, in a crossfit gym background",
+    "filename": "lime_tank_mohawk_fade"
+  },
+  "66": {
+    "prompt": "a man wearing a maroon wool sweater, distinguished beard, in a library study background",
+    "filename": "maroon_wool_distinguished_beard"
+  },
+  "67": {
+    "prompt": "a man wearing a silver sequin shirt, spiky undercut, in a nightclub dj booth background",
+    "filename": "silver_sequin_spiky_undercut"
+  },
+  "68": {
+    "prompt": "a man wearing a earthtone flannel, mountain man beard, in a wilderness cabin background",
+    "filename": "earthtone_flannel_mountain_beard"
+  },
+  "69": {
+    "prompt": "a man wearing a neon yellow safety jacket, buzz cut, in a construction crane background",
+    "filename": "neon_safety_buzz_construction"
+  },
+  "70": {
+    "prompt": "a man wearing a royal blue cardigan, gentleman's mustache, in a gentleman's club background",
+    "filename": "royal_cardigan_gentlemans_mustache"
+  },
+  "71": {
+    "prompt": "a man wearing a sunset orange shirt, textured crop, in a beach resort background",
+    "filename": "sunset_orange_textured_crop"
+  },
+  "72": {
+    "prompt": "a man wearing a midnight black turtleneck, slicked back, in a art gallery opening background",
+    "filename": "midnight_turtleneck_slicked_gallery"
+  },
+  "73": {
+    "prompt": "a man wearing a jade green silk shirt, long ponytail, in a martial arts dojo background",
+    "filename": "jade_silk_long_ponytail"
+  },
+  "74": {
+    "prompt": "a man wearing a copper brown leather vest, braided beard, in a blacksmith shop background",
+    "filename": "copper_leather_braided_beard"
+  },
+  "75": {
+    "prompt": "a man wearing a electric purple hoodie, frosted tips, in a arcade gaming lounge background",
+    "filename": "electric_purple_frosted_tips"
+  },
+  "76": {
+    "prompt": "a man wearing a champagne colored blazer, side swept, in a wedding venue background",
+    "filename": "champagne_blazer_side_swept"
+  },
+  "77": {
+    "prompt": "a man wearing a rust red flannel, lumberjack beard, in a sawmill background",
+    "filename": "rust_red_flannel_sawmill"
+  },
+  "78": {
+    "prompt": "a man wearing a ocean blue windbreaker, caesar fade, in a sailing yacht background",
+    "filename": "ocean_windbreaker_caesar_fade"
+  },
+  "79": {
+    "prompt": "a man wearing a golden bronze vest, chin strap beard, in a treasure vault background",
+    "filename": "golden_bronze_chin_strap"
+  },
+  "80": {
+    "prompt": "a man wearing a forest green wool sweater, full mountain beard, in a ski lodge background",
+    "filename": "forest_wool_mountain_beard"
+  },
+  "81": {
+    "prompt": "a man wearing a platinum silver shirt, buzz cut skin fade, in a luxury penthouse background",
+    "filename": "platinum_silver_skin_fade"
+  },
+  "82": {
+    "prompt": "a man wearing a deep crimson blazer, victorian mustache, in a opera theater background",
+    "filename": "deep_crimson_victorian_mustache"
+  },
+  "83": {
+    "prompt": "a man wearing a sage utility jacket, tactical buzz, in a military base background",
+    "filename": "sage_utility_tactical_buzz"
+  },
+  "84": {
+    "prompt": "a man wearing a azure blue dress shirt, corporate cut, in a skyscraper office background",
+    "filename": "azure_dress_corporate_cut"
+  },
+  "85": {
+    "prompt": "a man wearing a amber colored leather jacket, rockstar hair, in a concert stage background",
+    "filename": "amber_leather_rockstar_hair"
+  },
+  "86": {
+    "prompt": "a man wearing a moss green cardigan, professor beard, in a university lecture hall background",
+    "filename": "moss_cardigan_professor_beard"
+  },
+  "87": {
+    "prompt": "a man wearing a ruby red silk shirt, slicked pompadour, in a luxury restaurant background",
+    "filename": "ruby_silk_slicked_restaurant"
+  },
+  "88": {
+    "prompt": "a man wearing a charcoal wool blazer, executive cut, in a boardroom meeting background",
+    "filename": "charcoal_wool_executive_cut"
+  },
+  "89": {
+    "prompt": "a man wearing a sunset pink hoodie, surfer hair, in a beach boardwalk background",
+    "filename": "sunset_pink_surfer_hair"
+  },
+  "90": {
+    "prompt": "a man wearing a emerald silk vest, braided goatee, in a casino poker room background",
+    "filename": "emerald_silk_braided_goatee"
+  },
+  "91": {
+    "prompt": "a man wearing a titanium gray jacket, military high and tight, in a space station background",
+    "filename": "titanium_gray_space_station"
+  },
+  "92": {
+    "prompt": "a man wearing a golden amber shirt, viking braids, in a mead hall background",
+    "filename": "golden_amber_viking_mead"
+  },
+  "93": {
+    "prompt": "a man wearing a deep teal cardigan, hipster undercut, in a vintage record store background",
+    "filename": "deep_teal_hipster_undercut"
+  },
+  "94": {
+    "prompt": "a man wearing a burgundy leather vest, handlebar mustache, in a vintage barbershop background",
+    "filename": "burgundy_leather_barbershop"
+  },
+  "95": {
+    "prompt": "a man wearing a pearl gray blazer, distinguished silver hair, in a wine cellar background",
+    "filename": "pearl_gray_silver_wine"
+  },
+  "96": {
+    "prompt": "a man wearing a electric lime shirt, punk mohawk, in a underground club background",
+    "filename": "electric_lime_punk_mohawk"
+  },
+  "97": {
+    "prompt": "a man wearing a midnight navy sweater, sailor beard, in a lighthouse background",
+    "filename": "midnight_navy_sailor_lighthouse"
+  },
+  "98": {
+    "prompt": "a man wearing a bronze cardigan, distinguished beard, in a antique shop background",
+    "filename": "bronze_cardigan_antique_shop"
+  },
+  "99": {
+    "prompt": "a man wearing a electric yellow shirt, spiky hair, in a cyber cafe background",
+    "filename": "electric_yellow_cyber_cafe"
+  },
+  "100": {
+    "prompt": "a man wearing a deep forest jacket, woodsman beard, in a log cabin workshop background",
+    "filename": "deep_forest_woodsman_workshop"
   }
 }
