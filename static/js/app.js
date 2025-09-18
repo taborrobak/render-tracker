@@ -56,9 +56,9 @@ class RenderFlow {
         }
 
         updateElapsedTimes() {
-          // Update elapsed times for all rendering jobs without full re-render
+          // Update elapsed times for all working jobs without full re-render
           this.jobs.forEach((job) => {
-            if (job.status === "rendering" && job.elapsed_time !== null) {
+            if (job.status === "working" && job.elapsed_time !== null) {
               job.elapsed_time += 1;
               // Update the DOM element
               const jobElement = document.querySelector(
@@ -66,13 +66,13 @@ class RenderFlow {
               );
               if (jobElement) {
                 const timeStr = this.formatElapsedTime(job.elapsed_time);
-                const statusIcon = this.getStatusIcon("rendering");
+                const statusIcon = this.getStatusIcon("working");
                 const workerLink = job.worker_url
                   ? `<a href="${job.worker_url}" target="_blank" class="worker-link" title="Open worker UI">▶</a>`
                   : "";
 
                 jobElement.innerHTML = `
-                  <div class="working-content">${statusIcon} Rendering</div>
+                  <div class="working-content">${statusIcon} Working</div>
                   <div class="working-right">
                     <span class="elapsed-time">${timeStr}</span>
                     ${workerLink}
@@ -316,10 +316,10 @@ class RenderFlow {
               // Get status icon
               const statusIcon = this.getStatusIcon(job.status);
 
-              // Format status display with elapsed time and worker link for rendering jobs
+              // Format status display with elapsed time and worker link for working jobs
               let statusDisplay =
                 job.status.charAt(0).toUpperCase() + job.status.slice(1);
-              if (job.status === "rendering") {
+              if (job.status === "working") {
                 const timeStr =
                   job.elapsed_time !== null
                     ? this.formatElapsedTime(job.elapsed_time)
@@ -329,7 +329,7 @@ class RenderFlow {
                   : "";
 
                 statusDisplay = `
-                  <div class="working-content">${statusIcon} Rendering</div>
+                  <div class="working-content">${statusIcon} Working</div>
                   <div class="working-right">
                     ${
                       timeStr
@@ -434,6 +434,21 @@ class RenderFlow {
             const response = await fetch(`/preview/${job.id}`);
             const previewData = await response.json();
 
+            // Dynamically generate trait items based on available data
+            let traitsHtml = '';
+            if (previewData.traits && typeof previewData.traits === 'object') {
+                for (const [key, value] of Object.entries(previewData.traits)) {
+                    // Format the key for display (capitalize first letter, replace underscores with spaces)
+                    const displayKey = key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
+                    traitsHtml += `
+                        <div class="trait-item">
+                            <div class="trait-label">${displayKey}</div>
+                            <div class="trait-value">${value || 'N/A'}</div>
+                        </div>
+                    `;
+                }
+            }
+
             const html = `
                         <div class="job-detail-header">
                             <div class="job-title">Job #${job.id}</div>
@@ -445,45 +460,7 @@ class RenderFlow {
                         <div class="job-detail-content">
                             <div class="traits-section">
                                 <div class="traits-title">Job Traits</div>
-                                <div class="trait-item">
-                                    <div class="trait-label">Scene</div>
-                                    <div class="trait-value">${
-                                      previewData.traits?.scene ||
-                                      "Default Scene"
-                                    }</div>
-                                </div>
-                                <div class="trait-item">
-                                    <div class="trait-label">Resolution</div>
-                                    <div class="trait-value">${
-                                      previewData.traits?.resolution ||
-                                      "1920x1080"
-                                    }</div>
-                                </div>
-                                <div class="trait-item">
-                                    <div class="trait-label">Frame Rate</div>
-                                    <div class="trait-value">${
-                                      previewData.traits?.frame_rate || "30"
-                                    }</div>
-                                </div>
-                                <div class="trait-item">
-                                    <div class="trait-label">Style</div>
-                                    <div class="trait-value">${
-                                      previewData.traits?.style || "Realistic"
-                                    }</div>
-                                </div>
-                                <div class="trait-item">
-                                    <div class="trait-label">Lighting</div>
-                                    <div class="trait-value">${
-                                      previewData.traits?.lighting || "Standard"
-                                    }</div>
-                                </div>
-                                <div class="trait-item">
-                                    <div class="trait-label">Camera Angle</div>
-                                    <div class="trait-value">${
-                                      previewData.traits?.camera_angle ||
-                                      "Eye Level"
-                                    }</div>
-                                </div>
+                                ${traitsHtml}
                                 <div class="trait-item">
                                     <div class="trait-label">Status</div>
                                     <div class="trait-value">
