@@ -55,6 +55,88 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
+async def delete_wasabi_file(job_id: int) -> tuple[bool, str]:
+    """
+    Helper function to delete a file from Wasabi S3
+    Returns (success: bool, message: str)
+    """
+    try:
+        filename = f"{job_id}.png"
+        
+        # Try boto3 first (for Railway deployment)
+        aws_access_key = os.getenv("AWS_ACCESS_KEY_ID")
+        aws_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+        
+        if aws_access_key and aws_secret_key:
+            # Use boto3 for Wasabi operations
+            try:
+                import boto3
+                from botocore.exceptions import ClientError
+                
+                # Configure boto3 client for Wasabi
+                s3_client = boto3.client(
+                    's3',
+                    endpoint_url=os.getenv("WASABI_ENDPOINT_URL", "https://s3.eu-west-2.wasabisys.com"),
+                    aws_access_key_id=aws_access_key,
+                    aws_secret_access_key=aws_secret_key,
+                    region_name='eu-west-2'
+                )
+                
+                bucket_name = os.getenv("WASABI_BUCKET_NAME", "tabcorp-data")
+                prefix = os.getenv("WASABI_PREFIX", "simtest4")
+                object_key = f"{prefix}/{filename}"
+                
+                # Check if file exists and delete it
+                try:
+                    s3_client.head_object(Bucket=bucket_name, Key=object_key)
+                    # File exists, delete it
+                    s3_client.delete_object(Bucket=bucket_name, Key=object_key)
+                    return True, f"Successfully deleted {filename} from Wasabi (boto3)"
+                except ClientError as e:
+                    if e.response['Error']['Code'] == '404':
+                        return False, f"File {filename} not found on Wasabi"
+                    else:
+                        raise e
+                        
+            except ImportError:
+                return False, "boto3 not available"
+            except Exception as e:
+                return False, f"boto3 error: {str(e)}"
+                
+        else:
+            # Fallback to rclone (for local development)
+            import asyncio
+            wasabi_path = f"wasabi:tabcorp-data/simtest4/{filename}"
+            
+            # Check if file exists on Wasabi
+            check_cmd = ["rclone", "lsf", f"wasabi:tabcorp-data/simtest4/", "--include", filename]
+            check_result = await asyncio.create_subprocess_exec(
+                *check_cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            stdout, stderr = await check_result.communicate()
+            
+            if check_result.returncode == 0 and stdout.decode().strip():
+                # File exists, delete it
+                delete_cmd = ["rclone", "delete", wasabi_path]
+                delete_result = await asyncio.create_subprocess_exec(
+                    *delete_cmd,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+                stdout, stderr = await delete_result.communicate()
+                
+                if delete_result.returncode == 0:
+                    return True, f"Successfully deleted {filename} from Wasabi (rclone)"
+                else:
+                    return False, f"Failed to delete {filename} from Wasabi: {stderr.decode()}"
+            else:
+                return False, f"File {filename} not found on Wasabi"
+    
+    except Exception as e:
+        return False, f"Error deleting file from Wasabi: {str(e)}"
+
 def calculate_elapsed_time(start_time_str: Optional[str]) -> Optional[int]:
     """Calculate elapsed time in seconds from start_time string"""
     if not start_time_str:
@@ -287,10 +369,6 @@ async def toggle_star(job_id: int):
 @app.post("/job/{job_id}/reset")
 async def reset_job(job_id: int):
     """Reset a job to inactive status and delete corresponding image from Wasabi"""
-    import subprocess
-    import asyncio
-    import os
-    
     try:
         wasabi_deletion_result = "Wasabi deletion disabled"
         
@@ -298,43 +376,12 @@ async def reset_job(job_id: int):
         enable_wasabi = os.getenv("ENABLE_WASABI_DELETION", "true").lower() == "true"
         
         if enable_wasabi:
-            try:
-                filename = f"{job_id}.png"
-                wasabi_path = f"wasabi:tabcorp-data/simtest4/{filename}"
-                
-                # Check if file exists on Wasabi
-                check_cmd = ["rclone", "lsf", f"wasabi:tabcorp-data/simtest4/", "--include", filename]
-                check_result = await asyncio.create_subprocess_exec(
-                    *check_cmd,
-                    stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE
-                )
-                stdout, stderr = await check_result.communicate()
-                
-                if check_result.returncode == 0 and stdout.decode().strip():
-                    # File exists, delete it
-                    delete_cmd = ["rclone", "delete", wasabi_path]
-                    delete_result = await asyncio.create_subprocess_exec(
-                        *delete_cmd,
-                        stdout=asyncio.subprocess.PIPE,
-                        stderr=asyncio.subprocess.PIPE
-                    )
-                    stdout, stderr = await delete_result.communicate()
-                    
-                    if delete_result.returncode == 0:
-                        wasabi_deletion_result = f"Successfully deleted {filename} from Wasabi"
-                        print(f"✅ {wasabi_deletion_result}")
-                    else:
-                        wasabi_deletion_result = f"Failed to delete {filename} from Wasabi: {stderr.decode()}"
-                        print(f"❌ {wasabi_deletion_result}")
-                else:
-                    wasabi_deletion_result = f"File {filename} not found on Wasabi"
-                    print(f"ℹ️ {wasabi_deletion_result}")
-                    
-            except Exception as e:
-                wasabi_deletion_result = f"Error checking/deleting file from Wasabi: {str(e)}"
-                print(f"⚠️ {wasabi_deletion_result}")
-                # Continue with job reset even if Wasabi deletion fails
+            success, message = await delete_wasabi_file(job_id)
+            wasabi_deletion_result = message
+            if success:
+                print(f"✅ {message}")
+            else:
+                print(f"ℹ️ {message}")
         
         # Reset the job status (this happens regardless of Wasabi operation result)
         success = db.update_job_status(job_id, "inactive")
@@ -359,9 +406,6 @@ async def reset_job(job_id: int):
 @app.post("/jobs/reset-flagged")
 async def reset_all_flagged_jobs():
     """Reset all flagged jobs to inactive status and delete corresponding images from Wasabi"""
-    import asyncio
-    import os
-    
     try:
         # Get all flagged jobs (use large limit to get all)
         flagged_jobs = db.get_jobs(limit=10000, status="flagged")
@@ -376,38 +420,12 @@ async def reset_all_flagged_jobs():
             
             # Try to delete corresponding file from Wasabi if enabled
             if enable_wasabi:
-                try:
-                    filename = f"{job_id}.png"
-                    wasabi_path = f"wasabi:tabcorp-data/simtest4/{filename}"
-                    
-                    # Check if file exists on Wasabi
-                    check_cmd = ["rclone", "lsf", f"wasabi:tabcorp-data/simtest4/", "--include", filename]
-                    check_result = await asyncio.create_subprocess_exec(
-                        *check_cmd,
-                        stdout=asyncio.subprocess.PIPE,
-                        stderr=asyncio.subprocess.PIPE
-                    )
-                    stdout, stderr = await check_result.communicate()
-                    
-                    if check_result.returncode == 0 and stdout.decode().strip():
-                        # File exists, delete it
-                        delete_cmd = ["rclone", "delete", wasabi_path]
-                        delete_result = await asyncio.create_subprocess_exec(
-                            *delete_cmd,
-                            stdout=asyncio.subprocess.PIPE,
-                            stderr=asyncio.subprocess.PIPE
-                        )
-                        stdout, stderr = await delete_result.communicate()
-                        
-                        if delete_result.returncode == 0:
-                            deleted_files += 1
-                            print(f"✅ Successfully deleted {filename} from Wasabi")
-                        else:
-                            print(f"❌ Failed to delete {filename} from Wasabi: {stderr.decode()}")
-                    
-                except Exception as e:
-                    print(f"⚠️ Error checking/deleting Wasabi file for job {job_id}: {e}")
-                    # Continue with job reset even if file deletion fails
+                success, message = await delete_wasabi_file(job_id)
+                if success:
+                    deleted_files += 1
+                    print(f"✅ {message}")
+                else:
+                    print(f"ℹ️ {message}")
             
             # Reset the job status
             success = db.update_job_status(job_id, "inactive")
@@ -506,30 +524,49 @@ async def reset_all_jobs():
 
 @app.post("/jobs/reset-all")
 async def reset_all_jobs():
-    """Reset ALL jobs to inactive status"""
+    """Reset ALL jobs to inactive status and delete corresponding images from Wasabi"""
     try:
         # Get all jobs (use large limit to get all)
         all_jobs = db.get_jobs(limit=10000)
         reset_count = 0
+        deleted_files = 0
+        
+        # Check if Wasabi deletion is enabled
+        enable_wasabi = os.getenv("ENABLE_WASABI_DELETION", "true").lower() == "true"
         
         for job in all_jobs:
             # Only reset jobs that are not already inactive
             if job["status"] != "inactive":
-                success = db.update_job_status(job["id"], "inactive")
+                job_id = job["id"]
+                
+                # Try to delete corresponding file from Wasabi if enabled
+                if enable_wasabi:
+                    success, message = await delete_wasabi_file(job_id)
+                    if success:
+                        deleted_files += 1
+                        print(f"✅ {message}")
+                    else:
+                        print(f"ℹ️ {message}")
+                
+                # Reset the job status
+                success = db.update_job_status(job_id, "inactive")
                 if success:
                     reset_count += 1
                     # Broadcast update to all connected clients for each job
                     await manager.broadcast({
                         "type": "job_update",
-                        "job_id": job["id"],
+                        "job_id": job_id,
                         "status": "inactive"
                     })
         
+        wasabi_message = f" and deleted {deleted_files} files from Wasabi" if enable_wasabi else ""
         return {
-            "message": f"Successfully reset {reset_count} jobs to inactive status",
-            "reset_count": reset_count
+            "message": f"Successfully reset {reset_count} jobs to inactive status{wasabi_message}",
+            "reset_count": reset_count,
+            "deleted_files": deleted_files if enable_wasabi else 0
         }
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/preview/{job_id}")
