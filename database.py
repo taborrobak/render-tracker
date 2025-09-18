@@ -103,12 +103,19 @@ class JobDatabase:
             
             if job:
                 # Mark as working with optional worker_url and start_time
+                now = datetime.now(timezone.utc).isoformat()
                 conn.execute(
                     "UPDATE jobs SET status = 'working', updated_at = ?, start_time = ?, worker_url = ? WHERE id = ?",
-                    (datetime.now(timezone.utc).isoformat(), datetime.now(timezone.utc).isoformat(), worker_url, job['id'])
+                    (now, now, worker_url, job['id'])
                 )
                 conn.commit()
-                return dict(job)
+                
+                # Return updated job data
+                updated_job = conn.execute(
+                    "SELECT id, status, created_at, updated_at, start_time, worker_url, starred FROM jobs WHERE id = ?",
+                    (job['id'],)
+                ).fetchone()
+                return dict(updated_job) if updated_job else None
             return None
     
     def update_job_status(self, job_id: int, status: str) -> bool:
