@@ -449,7 +449,7 @@ async def reset_all_flagged_jobs():
 
 @app.post("/jobs/reset-all")
 async def reset_all_jobs():
-    """Reset ALL jobs to inactive status and delete corresponding images from Wasabi"""
+    """Reset ALL jobs to inactive status and delete ALL images from Wasabi (nuclear option for testing)"""
     import asyncio
     import os
     
@@ -462,102 +462,97 @@ async def reset_all_jobs():
         # Check if Wasabi deletion is enabled
         enable_wasabi = os.getenv("ENABLE_WASABI_DELETION", "true").lower() == "true"
         
+        # First, reset all jobs in the database
         for job in all_jobs:
             # Only reset jobs that are not already inactive
             if job["status"] != "inactive":
                 job_id = job["id"]
                 
-                # Try to delete corresponding file from Wasabi if enabled
-                if enable_wasabi:
-                    try:
-                        filename = f"{job_id}.png"
-                        wasabi_path = f"wasabi:tabcorp-data/simtest4/{filename}"
-                        
-                        # Check if file exists on Wasabi
-                        check_cmd = ["rclone", "lsf", f"wasabi:tabcorp-data/simtest4/", "--include", filename]
-                        check_result = await asyncio.create_subprocess_exec(
-                            *check_cmd,
-                            stdout=asyncio.subprocess.PIPE,
-                            stderr=asyncio.subprocess.PIPE
-                        )
-                        stdout, stderr = await check_result.communicate()
-                        
-                        if check_result.returncode == 0 and stdout.decode().strip():
-                            # File exists, delete it
-                            delete_cmd = ["rclone", "delete", wasabi_path]
-                            delete_result = await asyncio.create_subprocess_exec(
-                                *delete_cmd,
-                                stdout=asyncio.subprocess.PIPE,
-                                stderr=asyncio.subprocess.PIPE
-                            )
-                            stdout, stderr = await delete_result.communicate()
-                            
-                            if delete_result.returncode == 0:
+                # Reset the job status
+                success = db.update_job_status(job_id, "inactive")
+                if success:
+                    reset_count += 1
+                    # Broadcast update to all connected clients for each job
+                    await manager.broadcast({
+                        "type": "job_update",
+                        "job_id": job_id,
+                        "status": "inactive"
+                    })
+        
+        # NUCLEAR OPTION: Delete ALL files from Wasabi regardless of job existence
+        if enable_wasabi:
+            try:
+                # Get AWS credentials for boto3 (preferred for Railway)
+                aws_access_key = os.getenv("AWS_ACCESS_KEY_ID")
+                aws_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+                
+                if aws_access_key and aws_secret_key:
+                    # Use boto3 to list and delete all files
+                    import boto3
+                    from botocore.exceptions import ClientError
+                    
+                    s3_client = boto3.client(
+                        's3',
+                        endpoint_url=os.getenv("WASABI_ENDPOINT_URL", "https://s3.eu-west-2.wasabisys.com"),
+                        aws_access_key_id=aws_access_key,
+                        aws_secret_access_key=aws_secret_key,
+                        region_name='eu-west-2'
+                    )
+                    
+                    bucket_name = os.getenv("WASABI_BUCKET_NAME", "tabcorp-data")
+                    prefix = os.getenv("WASABI_PREFIX", "simtest4")
+                    
+                    # List all objects in the prefix
+                    response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=f"{prefix}/")
+                    
+                    if 'Contents' in response:
+                        for obj in response['Contents']:
+                            try:
+                                s3_client.delete_object(Bucket=bucket_name, Key=obj['Key'])
                                 deleted_files += 1
-                                print(f"✅ Successfully deleted {filename} from Wasabi")
-                            else:
-                                print(f"❌ Failed to delete {filename} from Wasabi: {stderr.decode()}")
+                                print(f"✅ Deleted {obj['Key']} from Wasabi (boto3)")
+                            except Exception as e:
+                                print(f"❌ Failed to delete {obj['Key']}: {e}")
+                    
+                else:
+                    # Fallback to rclone for local development
+                    # List all files in the Wasabi directory
+                    list_cmd = ["rclone", "lsf", "wasabi:tabcorp-data/simtest4/"]
+                    list_result = await asyncio.create_subprocess_exec(
+                        *list_cmd,
+                        stdout=asyncio.subprocess.PIPE,
+                        stderr=asyncio.subprocess.PIPE
+                    )
+                    stdout, stderr = await list_result.communicate()
+                    
+                    if list_result.returncode == 0:
+                        files = stdout.decode().strip().split('\n')
+                        files = [f.strip().rstrip('/') for f in files if f.strip()]  # Remove trailing slashes
+                        files = [f for f in files if f]  # Remove empty strings
                         
-                    except Exception as e:
-                        print(f"⚠️ Error checking/deleting Wasabi file for job {job_id}: {e}")
-                        # Continue with job reset even if file deletion fails
-                
-                # Reset the job status
-                success = db.update_job_status(job_id, "inactive")
-                if success:
-                    reset_count += 1
-                    # Broadcast update to all connected clients for each job
-                    await manager.broadcast({
-                        "type": "job_update",
-                        "job_id": job_id,
-                        "status": "inactive"
-                    })
-        
-        wasabi_message = f" and deleted {deleted_files} files from Wasabi" if enable_wasabi else ""
-        return {
-            "message": f"Successfully reset {reset_count} jobs to inactive status{wasabi_message}",
-            "reset_count": reset_count,
-            "deleted_files": deleted_files if enable_wasabi else 0
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/jobs/reset-all")
-async def reset_all_jobs():
-    """Reset ALL jobs to inactive status and delete corresponding images from Wasabi"""
-    try:
-        # Get all jobs (use large limit to get all)
-        all_jobs = db.get_jobs(limit=10000)
-        reset_count = 0
-        deleted_files = 0
-        
-        # Check if Wasabi deletion is enabled
-        enable_wasabi = os.getenv("ENABLE_WASABI_DELETION", "true").lower() == "true"
-        
-        for job in all_jobs:
-            # Only reset jobs that are not already inactive
-            if job["status"] != "inactive":
-                job_id = job["id"]
-                
-                # Try to delete corresponding file from Wasabi if enabled
-                if enable_wasabi:
-                    success, message = await delete_wasabi_file(job_id)
-                    if success:
-                        deleted_files += 1
-                        print(f"✅ {message}")
+                        # Delete each file
+                        for filename in files:
+                            try:
+                                delete_cmd = ["rclone", "delete", f"wasabi:tabcorp-data/simtest4/{filename}"]
+                                delete_result = await asyncio.create_subprocess_exec(
+                                    *delete_cmd,
+                                    stdout=asyncio.subprocess.PIPE,
+                                    stderr=asyncio.subprocess.PIPE
+                                )
+                                stdout, stderr = await delete_result.communicate()
+                                
+                                if delete_result.returncode == 0:
+                                    deleted_files += 1
+                                    print(f"✅ Deleted {filename} from Wasabi (rclone)")
+                                else:
+                                    print(f"❌ Failed to delete {filename}: {stderr.decode()}")
+                            except Exception as e:
+                                print(f"❌ Error deleting {filename}: {e}")
                     else:
-                        print(f"ℹ️ {message}")
-                
-                # Reset the job status
-                success = db.update_job_status(job_id, "inactive")
-                if success:
-                    reset_count += 1
-                    # Broadcast update to all connected clients for each job
-                    await manager.broadcast({
-                        "type": "job_update",
-                        "job_id": job_id,
-                        "status": "inactive"
-                    })
+                        print(f"⚠️ Failed to list Wasabi files: {stderr.decode()}")
+                        
+            except Exception as e:
+                print(f"⚠️ Error during Wasabi cleanup: {e}")
         
         wasabi_message = f" and deleted {deleted_files} files from Wasabi" if enable_wasabi else ""
         return {
