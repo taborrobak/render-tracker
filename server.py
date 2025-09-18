@@ -567,7 +567,6 @@ async def reset_all_jobs():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/preview/{job_id}")
 async def get_job_preview(job_id: int):

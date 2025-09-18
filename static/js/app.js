@@ -1102,7 +1102,14 @@ class RenderFlow {
 
             if (response.ok) {
               const result = await response.json();
-              alert(`Successfully reset ${result.reset_count} jobs to inactive status`);
+              let message = `Successfully reset ${result.reset_count} jobs to inactive status`;
+              
+              // Add Wasabi deletion info if available
+              if (result.deleted_files && result.deleted_files > 0) {
+                message += ` and deleted ${result.deleted_files} files from Wasabi`;
+              }
+              
+              alert(message);
               
               // Refresh job list to show updated statuses
               await this.loadJobs();
