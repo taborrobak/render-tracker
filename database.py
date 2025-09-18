@@ -65,15 +65,13 @@ class JobDatabase:
             count = conn.execute("SELECT COUNT(*) FROM jobs").fetchone()[0]
             if count == 0:
                 print("Populating database with 100,000 jobs...")
-                # Generate statuses with realistic distribution
-                statuses = ['inactive'] * 85000 + ['working'] * 8000 + ['complete'] * 4000 + ['done'] * 2000 + ['error'] * 800 + ['flagged'] * 200
-                random.shuffle(statuses)
+                # All jobs start as inactive for clean deployment
+                status = 'inactive'
                 
                 # Insert jobs in batches
                 batch_size = 1000
                 jobs_data = []
                 for i in range(100000):
-                    status = statuses[i]
                     created_time = datetime.now(timezone.utc).isoformat()
                     updated_time = created_time
                     jobs_data.append((i + 1, status, created_time, updated_time))
@@ -95,7 +93,7 @@ class JobDatabase:
                 conn.commit()
                 print("Database populated successfully!")
     
-    def get_next_job(self) -> Optional[Dict]:
+    def get_next_job(self, worker_url: Optional[str] = None) -> Optional[Dict]:
         """Get next available job and mark it as 'working'"""
         with self.get_connection() as conn:
             # Use transaction to prevent race conditions
@@ -104,10 +102,10 @@ class JobDatabase:
             ).fetchone()
             
             if job:
-                # Mark as working
+                # Mark as working with optional worker_url and start_time
                 conn.execute(
-                    "UPDATE jobs SET status = 'working', updated_at = ? WHERE id = ?",
-                    (datetime.now(timezone.utc).isoformat(), job['id'])
+                    "UPDATE jobs SET status = 'working', updated_at = ?, start_time = ?, worker_url = ? WHERE id = ?",
+                    (datetime.now(timezone.utc).isoformat(), datetime.now(timezone.utc).isoformat(), worker_url, job['id'])
                 )
                 conn.commit()
                 return dict(job)
@@ -116,10 +114,18 @@ class JobDatabase:
     def update_job_status(self, job_id: int, status: str) -> bool:
         """Update job status"""
         with self.get_connection() as conn:
-            cursor = conn.execute(
-                "UPDATE jobs SET status = ?, updated_at = ? WHERE id = ?",
-                (status, datetime.now(timezone.utc).isoformat(), job_id)
-            )
+            if status == 'working':
+                # When marking as working, keep existing worker_url and start_time
+                cursor = conn.execute(
+                    "UPDATE jobs SET status = ?, updated_at = ? WHERE id = ?",
+                    (status, datetime.now(timezone.utc).isoformat(), job_id)
+                )
+            else:
+                # When marking as complete/error/flagged/inactive, clear worker fields
+                cursor = conn.execute(
+                    "UPDATE jobs SET status = ?, updated_at = ?, worker_url = NULL, start_time = NULL WHERE id = ?",
+                    (status, datetime.now(timezone.utc).isoformat(), job_id)
+                )
             conn.commit()
             return cursor.rowcount > 0
     
