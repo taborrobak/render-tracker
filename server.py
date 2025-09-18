@@ -342,12 +342,8 @@ async def get_job_preview(job_id: int):
     except (FileNotFoundError, json.JSONDecodeError, IndexError, KeyError):
         # Fallback traits if file doesn't exist or is malformed
         traits_data = {
-            "scene": "Default Scene",
-            "resolution": "1920x1080", 
-            "frame_rate": "30",
-            "style": "Realistic",
-            "lighting": "Standard",
-            "camera_angle": "Eye Level"
+            "prompt": "a man wearing a gray t-shirt, short hair, in a urban alley background",
+            "filename": "gray_tshirt_short_hair"
         }
     
     
