@@ -318,6 +318,34 @@ async def reset_all_flagged_jobs():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/jobs/reset-all")
+async def reset_all_jobs():
+    """Reset ALL jobs to inactive status"""
+    try:
+        # Get all jobs (use large limit to get all)
+        all_jobs = db.get_jobs(limit=10000)
+        reset_count = 0
+        
+        for job in all_jobs:
+            # Only reset jobs that are not already inactive
+            if job["status"] != "inactive":
+                success = db.update_job_status(job["id"], "inactive")
+                if success:
+                    reset_count += 1
+                    # Broadcast update to all connected clients for each job
+                    await manager.broadcast({
+                        "type": "job_update",
+                        "job_id": job["id"],
+                        "status": "inactive"
+                    })
+        
+        return {
+            "message": f"Successfully reset {reset_count} jobs to inactive status",
+            "reset_count": reset_count
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/preview/{job_id}")
 async def get_job_preview(job_id: int):
     # Load traits from traits.json
