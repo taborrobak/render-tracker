@@ -112,7 +112,7 @@ async def get_jobs(limit: int = 20, offset: int = 0, status: Optional[str] = Non
         job_responses = []
         for job in jobs:
             elapsed_time = None
-            if job['status'] == 'rendering' and job.get('start_time'):
+            if job['status'] == 'working' and job.get('start_time'):
                 elapsed_time = calculate_elapsed_time(job['start_time'])
             
             job_responses.append(JobResponse(
@@ -208,10 +208,10 @@ async def claim_job(job_id: int, request: ClaimJobRequest = ClaimJobRequest()):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/next-job")
-async def get_next_job():
+async def get_next_job(request: ClaimJobRequest = ClaimJobRequest()):
     """Get the next available job and claim it"""
     try:
-        job = db.get_next_job()
+        job = db.get_next_job(request.worker_url)
         if not job:
             raise HTTPException(status_code=404, detail="No jobs available")
         
@@ -227,6 +227,9 @@ async def get_next_job():
             status=job['status'],
             created_at=job['created_at'],
             updated_at=job['updated_at'],
+            start_time=job.get('start_time'),
+            elapsed_time=calculate_elapsed_time(job.get('start_time')),
+            worker_url=job.get('worker_url'),
             starred=bool(job.get('starred', False))
         )
     except Exception as e:
@@ -355,7 +358,7 @@ async def get_job_preview(job_id: int):
 # Static file serving
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
-    return FileResponse("/home/tabor/render_tracker/dashboard.html")
+    return FileResponse("dashboard.html")
 
 # Health check
 @app.get("/health")
